@@ -1,0 +1,28 @@
+From Chris Krook-Magnuson:
+
+Recorder file output:
+By opening the file and typing "whos" at the command prompt, you get a detailed overview of the variables in it.
+The most important variables are:
+* sbuf which has 5 columns (one for each channel), each with 1900000 datapoints. (You can for example access the data for channel , using sbuf(:,3)
+* fs, is the sampling rate
+* trdata is a structure array that contains trigger information.
+  - tr(1) contains the trigger info for channel 1, etc.
+  - trdata has 7 fields:  
+   {'ne'                  }
+    {'str'                 }
+    {'leds'                }
+    {'nb'                  }
+    {'FramesAcquired'      }
+    {'DiskLoggerFrameCount'}
+    {'timestamp'           }
+Of these:
+  - trdata(1).timestamp contains the timestamps of the triggers in the file. The first entry is a timestamp for the start of the recording, the last entry is a timestamp for the end of the recording. The remaining timestamps are for the moment of triggers.  So for example datestr(trdata(3).timestamp(2)) shows you the data and time of the first trigger in channel 3.
+  - trdata(1).leds will tell you if light was delivered or not (control) for each triggered event, and trdata(3).leds has a 0 or 1 for each trigger
+- There is no variable for time, but you can create one using time=(1/fs)*(0:1:size(sbuf,1)-1); which is in seconds from start of recording
+- Other variables contain the settings used for the recordings.
+
+To convert (e.g.) channel 1 trigger data into a more readable format:
+>>Datestr(trdata(1).timestamp) will show you the date of recording start
+
+>>(Trdata(1).timestamp-trdata(1).timestamp(1))/(24*3600) will convert all triggers to seconds since start of file.
+

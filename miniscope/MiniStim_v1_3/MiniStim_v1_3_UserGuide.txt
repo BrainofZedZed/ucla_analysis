@@ -1,0 +1,32 @@
+MiniStim user guide
+updated 7/30/2020 by ZZ
+
+% Modular posthoc miniscope analysis suite to stimuli (or, more generally, time locked events)
+% Built around experimental setup in which animal connected to miniscope
+% (mscam) receives intermittent light stimuli, which is split to also flash onto the corresponding behavior camera (stimcam). 
+% 
+% 'stimFrameFinder' looks for brightness flashes and identifies stim periods on stimcam, then translates to miniscope frame numbers. Can alternatively load in stim time information to avoid re-running this process, or if alternate forms of stim time recording are used.
+%
+%'bootstrapStimFunc' takes average response of each cell around the stimulus, compares it to a bootstrapped baseline distribution, and looks for significant responses (based on numSD). 
+%
+%'globalStimFunc' gets averaged, global respone across all cells around the stimulus. 
+% 
+%'corrStimFunc' quantifies global correlation of activity over a sliding window (note: this windowing creates a gap [temporal discontinuity] in the correlation metric at the end of each period (pre, stim, and post. eg if the stimulus length is three seconds, and the window is one second, there will be measurement scores for only the first two seconds, because the last measurement encompasses the time period from 2 - 3 seconds)
+
+
+INPUTS
+- msCam_data_processed.mat:  output from MIN1PIPE, for calcium signal
+
+- timestamps.mat:  timestamp file associated with miniscope recording
+
+- (optional) behCam.avi:  video series with videos containing stim flashes. If used, timestamps.mat has to have recorded both miniscope cam and behCam.
+
+
+OUTPUTS
+- stimFrameFinder: saves file '_stimframes.mat', containing frame brightness information, interpreted stim times, and matrices containing stim frames with reference to the stim camera (stimframes) and with reference to the miniscope camera (stimframes_ms)
+
+- bootstrapStimFunc:  saves file 'stim_response.mat', containing peristim information for all cells and all stims (allstim), the mean of the bootstrapped baseline distribution (bs_mean), and index of all cells with a signal greater than the SD cutoff (ind_sig), and the mean responses of all cells across the stims (stim_mean). Additionally, saves a fig for each cell with a significant response, showing its mean response on top of the baseline and SD window.
+
+- globalStimFunc:  saves file 'globalResponse.mat', containing the peristimulus data for all cells across all responses (pstim_raw). Also saves the change in response relative to the pre-stim period (pstim_delta), the average global change in response (pstim_avg_globl), and a smoothed global mean response (ie mean across all cells and all trials; pstim_smth)
+
+- corrStimFunc:  saves file 'corrcoef.mat', containing the binned and binarized data for each cell and stimulus (spkt), that data transformed for input into a correlation function (allstimspkT), the peristimulus global correlated activity for each stimulus (allR), that same activity normalized to the pre-stim period for each stimulus (allR_norm), the bins denoting the start / stim on / stim off / end of each stimulus period (peristimbins), and the same bins adjusted for the discontinuity with the correlated measurements (peristimbins_corr)

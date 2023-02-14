@@ -1,0 +1,69 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="4028961703" file="C:\Users\Zach\Box\Zach_repo\Code\misc matlab\Noise_Maker.prj" location="C:\Users\Zach\Box\Zach_repo\Code\misc matlab" name="Noise_Maker" target="target.mlapps" target-name="Package App">
+    <param.appname>Noise_Maker</param.appname>
+    <param.authnamewatermark>Zachary Zeidler</param.authnamewatermark>
+    <param.email>zzeidler@ucla.edu</param.email>
+    <param.company>DeNardo Lab</param.company>
+    <param.icon />
+    <param.icons />
+    <param.summary>simple app to start and stop 4kHz tone and white noise</param.summary>
+    <param.description>Button interactivity to generate and stop pure tone (4kHz) and white noise. NB: noise maximum duration is 60 seconds.</param.description>
+    <param.screenshot>C:\Users\Zach\AppData\Local\Temp\tp664759d4_55bb_4e47_859a_31a9716c4b1f.png</param.screenshot>
+    <param.version>1.0</param.version>
+    <param.products.name />
+    <param.products.id />
+    <param.products.version />
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>912b4d3a-e999-40a3-8441-f80923df1d7c</param.guid>
+    <unset>
+      <param.authnamewatermark />
+      <param.email />
+      <param.company />
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.products.name />
+      <param.products.id />
+      <param.products.version />
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\Noise_Maker.mlapp</file>
+    </fileset.main>
+    <fileset.depfun />
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file location="C:\Users\Zach\Box\Zach_repo\Code" name="misc matlab" optional="false">C:\Users\Zach\Box\Zach_repo\Code\misc matlab</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2022a</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

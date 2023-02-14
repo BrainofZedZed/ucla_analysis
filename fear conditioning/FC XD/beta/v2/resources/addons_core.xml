@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addonCore>
+  <label>Fear Conditioning Experiment Designer</label>
+  <version>0.2</version>
+  <type>app</type>
+  <packagedBy>(R2020a)</packagedBy>
+  <identifier>13242208-2a4b-4c0e-bf27-81fc85424f28</identifier>
+  <createdBy name="Zachary Zeidler"/>
+  <image>resources/screenshot.png</image>
+  <icons>
+    <icon tag="0">resources/icon_48.png</icon>
+    <icon tag="1">resources/icon_24.png</icon>
+    <icon tag="2">resources/icon_16.png</icon>
+  </icons>
+</addonCore>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<toolset id="user_apps_toolset" template="false">
+   <tool app_file_path="./" handler_class="com.mathworks.appmanagement.desktop.ToolboxToolSetExtensionHandler" id="13242208-2a4b-4c0e-bf27-81fc85424f28" label="Fear Conditioning Experiment Designer" toolset_id="user_apps_toolset">
+      <callback>matlab.apputil.run('FearConditioningExperimentDesignerAPP')</callback>
+      <parent_tool id="my_apps" toolset_id="apps_toolset"/>
+   </tool>
+</toolset>

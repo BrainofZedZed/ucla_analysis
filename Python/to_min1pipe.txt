@@ -1,0 +1,48 @@
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\F11_D1\customEntry0Missing\2022_06_21\09_27_20\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\F11_FC\customEntry0Missing\2022_06_20\14_31_58\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\F11_hab\customEntry0Missing\2022_06_20\14_19_53\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\F12_D1\customEntry0Missing\2022_06_21\08_10_33\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\F12_FC\customEntry0Missing\2022_06_20\12_10_46\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\F12_hab\customEntry0Missing\2022_06_20\11_55_32\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\M7_D1\customEntry0Missing\2022_06_21\09_01_09\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\M7_FC\customEntry0Missing\2022_06_20\13_46_54\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\M7_hab\customEntry0Missing\2022_06_20\13_34_24\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\M8_D1\customEntry0Missing\2022_06_21\08_38_17\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\M8_FC\customEntry0Missing\2022_06_20\12_59_44\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);
+
+file_name = 'v0.avi';
+path_name ='C:\Users\DeNardoLab\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort4\M8_hab\customEntry0Missing\2022_06_20\12_48_21\My_V4_Miniscope\headOrientation.csv';
+[fname, frawname, fregname] = min1pipe_CUSTOM(Fsi, Fsi_new, spatialr, se, ismc, flag, file_name, path_name);

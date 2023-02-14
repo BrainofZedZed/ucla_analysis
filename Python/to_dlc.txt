@@ -1,0 +1,4 @@
+r"C:\Users\DeNardoLab1\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort3\2022_06_28\12_09_45\My_WebCam\concat_beh.avi",
+r"C:\Users\DeNardoLab1\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort3\2022_06_28\12_16_44\My_WebCam\concat_beh.avi",
+r"C:\Users\DeNardoLab1\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort3\2022_06_28\12_35_24\My_WebCam\concat_beh.avi",
+r"C:\Users\DeNardoLab1\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort3\2022_06_28\12_41_14\My_WebCam\concat_beh.avi",

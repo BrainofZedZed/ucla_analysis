@@ -1,0 +1,61 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration build-checksum="3193249413" file="C:\Users\Zach\Box\Zach_repo\Code\fear conditioning\FC XD\v3\Fear Conditioning Experiment Designer.prj" location="C:\Users\Zach\Box\Zach_repo\Code\fear conditioning\FC XD\v3" name="Fear Conditioning Experiment Designer" target="target.mlapps" target-name="Package App">
+    <param.appname>Fear Conditioning Experiment Designer</param.appname>
+    <param.authnamewatermark>Zachary Zeidler</param.authnamewatermark>
+    <param.email>zzeidler@ucla.edu</param.email>
+    <param.company>UCLA</param.company>
+    <param.icon />
+    <param.icons />
+    <param.summary>updated Fear Conditiong Experiment Designer, using current Arduino support package for MATLAB (replaces legacy Arduino syntax).</param.summary>
+    <param.description>requires MATLAB Arduino support package to be installed</param.description>
+    <param.screenshot>C:\Users\Zach\AppData\Local\Temp\tpcec837f8_2873_46e6_8705_f5cae8e53774.png</param.screenshot>
+    <param.version>1.0</param.version>
+    <param.products.name />
+    <param.products.id />
+    <param.products.version />
+    <param.platforms />
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>0f17c014-1881-462e-b24d-61d7a072377c</param.guid>
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.version />
+      <param.products.name />
+      <param.products.id />
+      <param.products.version />
+      <param.platforms />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\FC_Design_v3.mlapp</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\launch_fc_v3.m</file>
+    </fileset.depfun>
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file location="C:\Users\Zach\Box\Zach_repo\Code\fear conditioning\FC XD" name="v3" optional="false">C:\Users\Zach\Box\Zach_repo\Code\fear conditioning\FC XD\v3</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2020b</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

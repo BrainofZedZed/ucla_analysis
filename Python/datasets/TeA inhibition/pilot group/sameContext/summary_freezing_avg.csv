@@ -1,0 +1,15 @@
+ZZ011_recall1_sameCtxt,jaws,csp_laser,0.741938164893617
+ZZ011_recall1_sameCtxt,jaws,csm,0.787043189368771
+ZZ011_recall1_sameCtxt,jaws,csm_laser,0.686046511627907
+ZZ013_recall1_sameCtxt,jaws,csp_laser,0.546875
+ZZ013_recall1_sameCtxt,jaws,csm,0.728058510638298
+ZZ013_recall1_sameCtxt,jaws,csm_laser,0.629654255319149
+ZZ014_recall1_sameCtxt,jaws,csp_laser,0.720661569148936
+ZZ014_recall1_sameCtxt,jaws,csm,0.975066489361702
+ZZ014_recall1_sameCtxt,jaws,csm_laser,0.704454787234043
+ZZ016_recall1_sameCtxt,control,csp_laser,0.549783909574468
+ZZ016_recall1_sameCtxt,control,csm,0.814827127659574
+ZZ016_recall1_sameCtxt,control,csm_laser,0.507978723404255
+ZZ017_recall1_sameCtxt,control,csp_laser,0.703789893617021
+ZZ017_recall1_sameCtxt,control,csm,0.294547872340426
+ZZ017_recall1_sameCtxt,control,csm_laser,0.775598404255319
