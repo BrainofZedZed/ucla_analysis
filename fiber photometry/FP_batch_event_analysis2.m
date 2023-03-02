@@ -20,10 +20,11 @@ clear;
 %% USER DEFINED PARAMS FOR SIGNAL ANALYSIS
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
 P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize
-P2.baseline_per = [-2 0]; % baseline period relative to epoc onset for normalizing
+P2.baseline_per = [-2 -0]; % baseline period relative to epoc onset for normalizing
 
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = 0; % true to set signal values at t0 (tone onset) as 0
+P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 %% USER DEFINED IDENTITY OF SIGNAL CUE
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
@@ -41,11 +42,11 @@ P2.save_analysis = true; % true if save details of analysis
 P2.skip_prev_analysis = false; % true if not redo previous analysis
 
 % PMA specific analyses
-P2.do_platform_heatmap = false;
+P2.do_platform_heatmap = true;
 P2.do_auc_shocktrials = false;
-P2.do_platform = false;
+P2.do_platform = true;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
-
+P2.do_reward = true; % averages over reward frames
 %% USER DEFINED EVENT BOUTS TO LOOK AT
 % edit lines 87 and 88 (bouts, bouts_name)
 
@@ -103,8 +104,8 @@ for j = 1:length(P2.video_folder_list)
 
 %% USER DEFINED BOUTS FOR ANALYSIS
     % choose what bouts to look around. Nx2 matrix with [start, stop] behavior frames
-    bouts = Behavior.Temporal.CSm.Bouts;
-    bouts_name = 'CSm'; % char name of bouts (for labeling and saving)
+    bouts = Behavior.Temporal.CSp.Bouts;
+    bouts_name = 'CSp'; % char name of bouts (for labeling and saving)
 
     if P2.remove_last_trials
         bouts = bouts(1:end-2,:);
@@ -389,7 +390,7 @@ for j = 1:length(P2.video_folder_list)
         end
    %%     
         if P2.do_platform_heatmap
-            %% platform entries
+            %% platform entrie
             pf_time = 4; % seconds after platform entry to visualize
             pre_pf_time = 2; % seconds before platform to visualize
             pre_pf_baseline = 2; % seconds before pre_pf to use as baseline
@@ -400,98 +401,105 @@ for j = 1:length(P2.video_folder_list)
             pf_entry = Behavior.Spatial.platform.Bouts(:,1);
             total_length = (pf_time+pre_pf_time)*fps+1;
 
-            % test if first or end point will exceed recording limit
-            omega = pf_entry(pf_idx(end)) + total_length;
-            if omega > length(bhsig)
-                pf_idx = pf_idx(1:end-1);
+            % test to see if there's platform entries. exit if not
+            if isempty(pf_idx)
+                disp('no platform entries. skipping platform heatmap');
+            else
+    
+    
+                % test if first or end point will exceed recording limit
+                omega = pf_entry(pf_idx(end)) + total_length;
+                if omega > length(bhsig)
+                    pf_idx = pf_idx(1:end-1);
+                end
+    
+                alpha = pf_entry(pf_idx(1)) - (pre_pf_time+pre_pf_baseline)*fps;
+                if alpha < 1
+                    pf_idx = pf_idx(2:end);
+                end
+                % get signal for all trials and zscore
+                zall2 = zeros(size(pf_idx,1),total_length);
+                
+                for i = 1:size(zall2,1)
+                    bl = bhsig(pf_entry(pf_idx(i)) - ((pre_pf_time+pre_pf_baseline)*fps) : pf_entry(pf_idx(i)) - ((pre_pf_baseline)*fps));
+                    zb = mean(bl); % baseline period mean
+                    zsd = std(bl); % baseline period stdev
+                    s1 = pf_entry(pf_idx(i)) - (pre_pf_time*fps);
+                    s2 = pf_entry(pf_idx(i)) + (pf_time*fps);
+                    zall2(i,:)=((bhsig(s1:s2)- zb) / zsd);
+                end
+                
+                % make heatmap
+                fig = figure;
+                imagesc(zall2, [-5 5])
+                colormap('parula'); 
+                c1 = colorbar; 
+                title(sprintf('Z-Score Heat Map, %d Platform Entires at dashed line', size(pf_idx,1)));
+                ylabel('Entires', 'FontSize', 12);
+                hold on;
+                xline(pre_pf_time*fps, ':', 'LineWidth', 2);
+                xlabel(sprintf('frames (@ %d frames per second)', fps));
+                
+                filename = sprintf(['%s%s' '_'], exp_ID);
+                filename = [filename 'PlatformEntires_HeatMap'];
+                filename = [basedir '\' filename];
+                saveas(fig, filename);
+                close;
+                clear fig;
+    
+                %% platform exits
+                pf_time = 4; % seconds after platform entry to visualize
+                pre_pf_time = 2; % seconds before platform to visualize
+                pre_pf_baseline = 2; % seconds before pre_pf to use as baseline
+                fps = 50;
+                
+                pf_bout_dur = Behavior.Spatial.platform.Bouts(:,2) - Behavior.Spatial.platform.Bouts(:,1);
+                pf_idx = find(pf_bout_dur>(pf_time*fps));
+                pf_exit = Behavior.Spatial.platform.Bouts(:,2);
+                total_length = (pf_time+abs(pre_pf_time))*fps+1;
+                
+                % test if first or end point will exceed recording limit
+                omega = pf_exit(pf_idx(end)) + total_length;
+                if omega > length(bhsig)
+                    pf_idx = pf_idx(1:end-1);
+                end
+    
+                alpha = pf_exit(pf_idx(1)) - (pre_pf_time+pre_pf_baseline)*fps;
+                if alpha < 1
+                    pf_idx = pf_idx(2:end);
+                end
+                
+                % get signal for all trials and zscore
+                zall3 = zeros(size(pf_idx,1),total_length);
+                
+                
+                for i = 1:size(zall3,1)
+                    bl = bhsig(pf_exit(pf_idx(i)) - ((pre_pf_time+pre_pf_baseline)*fps) : pf_exit(pf_idx(i)) - ((pre_pf_baseline)*fps));
+                    zb = mean(bl); % baseline period mean
+                    zsd = std(bl); % baseline period stdev
+                    s1 = pf_exit(pf_idx(i)) - (pre_pf_time*fps);
+                    s2 = pf_exit(pf_idx(i)) + (pf_time*fps);
+                    zall3(i,:)=((bhsig(s1:s2)- zb) / zsd);
+                end
+                
+                % make heatmap
+                fig = figure;
+                imagesc(zall, [-5 5])
+                colormap('parula'); 
+                c1 = colorbar; 
+                title(sprintf('Z-Score Heat Map, %d Platform EXITS at dashed line', size(pf_idx,1)));
+                ylabel('Exits', 'FontSize', 12);
+                hold on;
+                xline(pre_pf_time*fps, ':', 'LineWidth', 2);
+                xlabel(sprintf('frames (@ %d frames per second)', fps));
+                
+                filename = sprintf(['%s%s' '_'], exp_ID);
+                filename = [filename 'PlatformExits_HeatMap'];
+                filename = [basedir '\' filename];
+                saveas(fig, filename);
+                close;
+                clear fig;
             end
-
-            alpha = pf_entry(pf_idx(1)) - (pre_pf_time+pre_pf_baseline)*fps;
-            if alpha < 1
-                pf_idx = pf_idx(2:end);
-            end
-            % get signal for all trials and zscore
-            zall = zeros(size(pf_idx,1),total_length);
-            
-            for i = 1:size(zall,1)
-                bl = bhsig(pf_entry(pf_idx(i)) - ((pre_pf_time+pre_pf_baseline)*fps) : pf_entry(pf_idx(i)) - ((pre_pf_baseline)*fps));
-                zb = mean(bl); % baseline period mean
-                zsd = std(bl); % baseline period stdev
-                s1 = pf_entry(pf_idx(i)) - (pre_pf_time*fps);
-                s2 = pf_entry(pf_idx(i)) + (pf_time*fps);
-                zall(i,:)=((bhsig(s1:s2)- zb) / zsd);
-            end
-            
-            % make heatmap
-            fig = figure;
-            imagesc(zall, [-5 5])
-            colormap('parula'); 
-            c1 = colorbar; 
-            title(sprintf('Z-Score Heat Map, %d Platform Entires at dashed line', size(pf_idx,1)));
-            ylabel('Entires', 'FontSize', 12);
-            hold on;
-            xline(pre_pf_time*fps, ':', 'LineWidth', 2);
-            xlabel(sprintf('frames (@ %d frames per second)', fps));
-            
-            filename = sprintf(['%s%s' '_'], exp_ID);
-            filename = [filename 'PlatformEntires_HeatMap'];
-            filename = [basedir '\' filename];
-            saveas(fig, filename);
-            close;
-            clear fig;
-
-            %% platform exits
-            pf_time = 4; % seconds after platform entry to visualize
-            pre_pf_time = 2; % seconds before platform to visualize
-            pre_pf_baseline = 2; % seconds before pre_pf to use as baseline
-            fps = 50;
-            
-            pf_bout_dur = Behavior.Spatial.platform.Bouts(:,2) - Behavior.Spatial.platform.Bouts(:,1);
-            pf_idx = find(pf_bout_dur>(pf_time*fps));
-            pf_exit = Behavior.Spatial.platform.Bouts(:,2);
-            total_length = (pf_time+abs(pre_pf_time))*fps+1;
-            
-            % test if first or end point will exceed recording limit
-            omega = pf_exit(pf_idx(end)) + total_length;
-            if omega > length(bhsig)
-                pf_idx = pf_idx(1:end-1);
-            end
-
-            alpha = pf_exit(pf_idx(1)) - (pre_pf_time+pre_pf_baseline)*fps;
-            if alpha < 1
-                pf_idx = pf_idx(2:end);
-            end
-            
-            % get signal for all trials and zscore
-            zall = zeros(size(pf_idx,1),total_length);
-            
-            
-            for i = 1:size(zall,1)
-                bl = bhsig(pf_exit(pf_idx(i)) - ((pre_pf_time+pre_pf_baseline)*fps) : pf_exit(pf_idx(i)) - ((pre_pf_baseline)*fps));
-                zb = mean(bl); % baseline period mean
-                zsd = std(bl); % baseline period stdev
-                s1 = pf_exit(pf_idx(i)) - (pre_pf_time*fps);
-                s2 = pf_exit(pf_idx(i)) + (pf_time*fps);
-                zall(i,:)=((bhsig(s1:s2)- zb) / zsd);
-            end
-            
-            % make heatmap
-            fig = figure;
-            imagesc(zall, [-5 5])
-            colormap('parula'); 
-            c1 = colorbar; 
-            title(sprintf('Z-Score Heat Map, %d Platform EXITS at dashed line', size(pf_idx,1)));
-            ylabel('Exits', 'FontSize', 12);
-            hold on;
-            xline(pre_pf_time*fps, ':', 'LineWidth', 2);
-            xlabel(sprintf('frames (@ %d frames per second)', fps));
-            
-            filename = sprintf(['%s%s' '_'], exp_ID);
-            filename = [filename 'PlatformExits_HeatMap'];
-            filename = [basedir '\' filename];
-            saveas(fig, filename);
-            close;
-            clear fig;
         end
 
         %% line plot
@@ -574,6 +582,121 @@ for j = 1:length(P2.video_folder_list)
 
 
         end
+
+     if P2.do_reward
+        %% reward consumption
+        reward_time = P2.reward_t;
+        pre_reward_time = 2; % seconds before platform to visualize
+        pre_reward_baseline = 2; % seconds before pre_pf to use as baseline
+        fps = 50;
+        
+        reward_bout_dur = rewardframes(:,2) - rewardframes(:,1);
+        reward_idx = 1:size(rewardframes,1);
+        reward_entry = rewardframes(:,1);
+        total_length = (reward_time+pre_reward_time)*fps+1;
+
+        % test to see if there's platform entries. exit if not
+        if isempty(rewardframes) || length(reward_bout_dur)<2
+            disp('no reward entries. skipping reward heatmap');
+        else
+
+
+            % test if first or end point will exceed recording limit
+            omega = reward_entry(end) + total_length;
+            if omega > length(bhsig)
+                reward_entry = reward_entry(1:end-1);
+            end
+
+            alpha = reward_entry(1) - (pre_reward_time+pre_reward_baseline)*fps;
+            if alpha < 1
+                reward_entry = reward_entry(2:end);
+            end
+            % get signal for all trials and zscore
+            zall4 = zeros(length(reward_entry),total_length);
+            
+            for i = 1:size(zall4,1)
+                bl = bhsig(reward_entry(i) - ((pre_reward_time+pre_reward_baseline)*fps) : reward_entry(i) - ((pre_reward_baseline)*fps));
+                zb = mean(bl); % baseline period mean
+                zsd = std(bl); % baseline period stdev
+                s1 = reward_entry(i) - (pre_reward_time*fps);
+                s2 = reward_entry(i) + (reward_time*fps);
+                zall4(i,:)=((bhsig(s1:s2)- zb) / zsd);
+            end
+            
+            % make heatmap
+            fig = figure;
+            imagesc(zall4, [-5 5])
+            colormap('parula'); 
+            c1 = colorbar; 
+            title(sprintf('Z-Score Heat Map, %d Reward Consumption Entry at dashed line', size(reward_idx,1)));
+            ylabel('Entires', 'FontSize', 12);
+            hold on;
+            xline(pre_pf_time*fps, ':', 'LineWidth', 2);
+            xlabel(sprintf('frames (@ %d frames per second)', fps));
+            
+            filename = sprintf(['%s%s' '_'], exp_ID);
+            filename = [filename 'RewardConsumption_HeatMap'];
+            filename = [basedir '\' filename];
+            saveas(fig, filename);
+            close;
+            clear fig;
+
+         %% reward entry but not consumption
+        reward_time = P2.reward_t;
+        pre_reward_time = 2; % seconds before platform to visualize
+        pre_reward_baseline = 2; % seconds before pre_pf to use as baseline
+        fps = 50;
+
+        clearvars rewardframes reward_bout_dur reward_idx reward_entry total_length
+
+        rewardframes = rewardframes_all(find(rewardframes_all(:,3)==0),1:2);
+        rewardframes = rewardframes(find(rewardframes(:,1)),:);
+        reward_bout_dur = rewardframes(:,2) - rewardframes(:,1);
+        reward_idx = 1:size(rewardframes,1);
+        reward_entry = rewardframes(:,1);
+        total_length = (reward_time+pre_reward_time)*fps+1;
+
+          % test if first or end point will exceed recording limit
+            omega = reward_entry(end) + total_length;
+            if omega > length(bhsig)
+                reward_entry = reward_entry(1:end-1);
+            end
+
+            alpha = reward_entry(1) - (pre_reward_time+pre_reward_baseline)*fps;
+            if alpha < 1
+                reward_entry = reward_entry(2:end);
+            end
+            % get signal for all trials and zscore
+            zall5 = zeros(length(reward_entry),total_length);
+            
+            for i = 1:size(zall5,1)
+                bl = bhsig(reward_entry(i) - ((pre_reward_time+pre_reward_baseline)*fps) : reward_entry(i) - ((pre_reward_baseline)*fps));
+                zb = mean(bl); % baseline period mean
+                zsd = std(bl); % baseline period stdev
+                s1 = reward_entry(i) - (pre_reward_time*fps);
+                s2 = reward_entry(i) + (reward_time*fps);
+                zall5(i,:)=((bhsig(s1:s2)- zb) / zsd);
+            end
+            
+            % make heatmap
+            fig = figure;
+            imagesc(zall5, [-5 5])
+            colormap('parula'); 
+            c1 = colorbar; 
+            title(sprintf('Z-Score Heat Map, %d Reward Port Entry at dashed line', size(reward_idx,1)));
+            ylabel('Entires', 'FontSize', 12);
+            hold on;
+            xline(pre_pf_time*fps, ':', 'LineWidth', 2);
+            xlabel(sprintf('frames (@ %d frames per second)', fps));
+            
+            filename = sprintf(['%s%s' '_'], exp_ID);
+            filename = [filename 'RewardEntry_HeatMap'];
+            filename = [basedir '\' filename];
+            saveas(fig, filename);
+            close;
+            clear fig;
+        end
+     end
     
         %% create behavior and signal plot
         % using whole data vector, limiting axis to break up data
