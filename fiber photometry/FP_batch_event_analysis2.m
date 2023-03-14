@@ -23,7 +23,7 @@ P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize
 P2.baseline_per = [-2 -0]; % baseline period relative to epoc onset for normalizing
 
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
-P2.t0_as_zero = 0; % true to set signal values at t0 (tone onset) as 0
+P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 %% USER DEFINED IDENTITY OF SIGNAL CUE
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
@@ -33,20 +33,20 @@ P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.cue = {'PC0_', 'CSp'};
 
 %% USER DEFINED PLOTTING & ANALYSIS
-P2.do_lineplot = true;
+P2.do_lineplot = false;
 P2.do_heatmap = true;
 P2.do_vectorplot = false;
-P2.do_peak = false;
+P2.do_peak = true;
 P2.do_auc = false;
 P2.save_analysis = true; % true if save details of analysis
 P2.skip_prev_analysis = false; % true if not redo previous analysis
 
 % PMA specific analyses
-P2.do_platform_heatmap = true;
+P2.do_platform_heatmap = false;
 P2.do_auc_shocktrials = false;
-P2.do_platform = true;
+P2.do_platform = false;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
-P2.do_reward = true; % averages over reward frames
+P2.do_reward = false; % averages over reward frames
 %% USER DEFINED EVENT BOUTS TO LOOK AT
 % edit lines 87 and 88 (bouts, bouts_name)
 
@@ -104,8 +104,8 @@ for j = 1:length(P2.video_folder_list)
 
 %% USER DEFINED BOUTS FOR ANALYSIS
     % choose what bouts to look around. Nx2 matrix with [start, stop] behavior frames
-    bouts = Behavior.Temporal.CSp.Bouts;
-    bouts_name = 'CSp'; % char name of bouts (for labeling and saving)
+    bouts = Behavior.Temporal.CSm.Bouts;
+    bouts_name = 'CSm'; % char name of bouts (for labeling and saving)
 
     if P2.remove_last_trials
         bouts = bouts(1:end-2,:);
