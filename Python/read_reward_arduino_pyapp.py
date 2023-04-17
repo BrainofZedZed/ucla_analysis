@@ -25,10 +25,11 @@ def stop_python_code():
     status_label.config(text="Data is no longer being logged.")
 
 def run_python_code():
+    experiment_id = experiment_id_entry.get()  # Get the Experiment ID from entry field
     savedir = savedir_var.get()
     dt = datetime.datetime.now()
     dt = dt.strftime("%Y%m%d_%H%M%S")
-    savename = "reward_data_" + dt + ".txt"
+    savename = experiment_id + "_reward_data_" + dt + ".txt"  # Use Experiment ID as prefix for save file name
     filename = os.path.join(savedir, savename)
 
     with open(filename, 'w') as f:
@@ -41,30 +42,35 @@ def choose_folder():
     savedir_var.set(folder)
 
 app = tk.Tk()
-app.title("Python Code Runner")
+app.title("Arduino Data Logger")
 
 arduino_com_label = tk.Label(app, text="Arduino COM #:")
 arduino_com_label.grid(row=0, column=0, sticky="e")
 arduino_com_entry = tk.Entry(app)
 arduino_com_entry.grid(row=0, column=1)
 
+experiment_id_label = tk.Label(app, text="Experiment ID:")  # Label for Experiment ID entry field
+experiment_id_label.grid(row=1, column=0, sticky="e")
+experiment_id_entry = tk.Entry(app)  # Entry field for Experiment ID
+experiment_id_entry.grid(row=1, column=1)
+
 savedir_label = tk.Label(app, text="Save Directory:")
-savedir_label.grid(row=1, column=0, sticky="e")
+savedir_label.grid(row=2, column=0, sticky="e")
 savedir_var = tk.StringVar()
 savedir_entry = tk.Entry(app, textvariable=savedir_var)
-savedir_entry.grid(row=1, column=1)
+savedir_entry.grid(row=2, column=1)
 
 choose_folder_button = tk.Button(app, text="Choose Folder", command=choose_folder)
-choose_folder_button.grid(row=1, column=2)
+choose_folder_button.grid(row=2, column=2)
 
 start_button = tk.Button(app, text="Start", bg="light green", fg="black", command=start_python_code)
-start_button.grid(row=2, column=0, padx=10, pady=10)
+start_button.grid(row=3, column=0, padx=10, pady=10)
 
 stop_button = tk.Button(app, text="Stop", bg="red", fg="black", command=stop_python_code)
-stop_button.grid(row=2, column=1, padx=10, pady=10)
+stop_button.grid(row=3, column=1, padx=10, pady=10)
 
 status_label = tk.Label(app, text="", wraplength=300, justify='left')
-status_label.grid(row=3, column=0, columnspan=3, pady=10)
+status_label.grid(row=4, column=0, columnspan=3, pady=10)
 
 running = False
 ser = None
