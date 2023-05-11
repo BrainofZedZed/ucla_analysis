@@ -27,7 +27,7 @@ P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 
 bouts_name = 'CSm'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
-%% USER DEFINED IDENTITY OF SIGNAL CUE
+%% REGISTER TDT TTL AND BEHDEPOT CUE NAME
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
 % event (eg 'tone', 'CSp')
@@ -1031,8 +1031,16 @@ for j = 1:length(P2.video_folder_list)
         if ~exist('auc_baseline','var')
             auc_baseline=[];
         end
+        if ~exist('pre_dur', 'var')
+            pre_dur = [];
+        end
+        if ~exist('epoc_length', 'var')
+            epoc_length = [];
+        end
 
         P2.fp_fps = fp_fps;
+        P2.event_on = pre_dur;
+        P2.event_off = epoc_length;
         savename = [basedir '\' exp_ID '_' bouts_name '_fibpho_analysis.mat'];
         if P2.save_analysis
           save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'peaks', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone');
