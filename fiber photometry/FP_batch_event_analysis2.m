@@ -25,6 +25,8 @@ P2.baseline_per = [-2 -0]; % baseline period relative to epoc onset for normaliz
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
+
+bouts_name = 'CSm'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 %% USER DEFINED IDENTITY OF SIGNAL CUE
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
@@ -33,11 +35,11 @@ P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.cue = {'PC0_', 'CSp'};
 
 %% USER DEFINED PLOTTING & ANALYSIS
-P2.do_lineplot = false;
+P2.do_lineplot = true;
 P2.do_heatmap = true;
 P2.do_vectorplot = false;
 P2.do_peak = true;
-P2.do_auc = false;
+P2.do_auc = true;
 P2.save_analysis = true; % true if save details of analysis
 P2.skip_prev_analysis = false; % true if not redo previous analysis
 
@@ -47,8 +49,9 @@ P2.do_auc_shocktrials = false;
 P2.do_platform = false;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
 P2.do_reward = false; % averages over reward frames
-%% USER DEFINED EVENT BOUTS TO LOOK AT
-% edit lines 87 and 88 (bouts, bouts_name)
+
+%% USER DEFINED BOUTS FOR ANALYSIS
+
 
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
@@ -80,7 +83,7 @@ peak_names = {'ID','peak value', 'latency'};
 %% loop through folders
 for j = 1:length(P2.video_folder_list)
     % clear from previous round
-    clearvars -except 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs';
+    clearvars -except 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs' 'bouts_name';
     % Initialize 
     ct = ct+1; % increase count
     current_video = P2.video_folder_list(j);    
@@ -102,13 +105,11 @@ for j = 1:length(P2.video_folder_list)
     exp_file = dir('*-*-*_*-*-*.mat');
     load(exp_file.name); % load experiment file
 
-%% USER DEFINED BOUTS FOR ANALYSIS
-    % choose what bouts to look around. Nx2 matrix with [start, stop] behavior frames
-    bouts = Behavior.Temporal.CSm.Bouts;
-    bouts_name = 'CSm'; % char name of bouts (for labeling and saving)
+
+    bouts = Behavior.Temporal.(bouts_name).Bouts;
 
     if P2.remove_last_trials
-        bouts = bouts(1:end-2,:);
+        bouts = bouts(1:end-1,:);
     end
 
     %% load stuff from current folder
@@ -241,6 +242,7 @@ for j = 1:length(P2.video_folder_list)
             peaks{ct,1} = exp_ID;
             peaks{ct,2} = peak;
             peaks{ct,3} = latency;
+
         end
     
         %% calculate auc 
