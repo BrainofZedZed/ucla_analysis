@@ -14,9 +14,8 @@
 % Point to grandparent folder, containing individual animals organized as
 % described above. Let run. Creates 'out' struct, with
 % freezing rates for different events
-%% INSTRUCTIONS
-% 1) load in Behavior, Behavior_Filter, Metrics
 
+clear; 
 %% Params
 fps = 50; % fps of behavior recording
 dur_tone = 30; % (s) duration of tone
@@ -126,11 +125,23 @@ first_pf = round(first_pf ./ fps);   % convert to seconds
 if P2.remove_baseline_tones
     first_pf = first_pf(P2.baseline_tones+1:end);
 end
+
+%% Part 4b: calculating successful avoids
+shock_start_frames = cueframes.US(:,1);
+avoids = zeros(size(shock_start_frames));
+for i = 1:length(avoids)
+    if on_pf(shock_start_frames(i))
+        avoids(i) = 1;
+    end
+end
+avoids = avoids';
+
 %% Part 5: batch output
 out.tone_frz(filenum,:) = [{id}, num2cell(tone_frz)];
 out.per_platform_frz(filenum,:) = [{id}, num2cell(per_tpf)];
 out.per_time_platform(filenum,:) = [{id}, num2cell(per_tp_tone)];
 out.plat_latency(filenum,:) = [{id}, num2cell(first_pf)];
+out.avoids(filenum,:) = [{id}, num2cell(avoids)];
 
 clearvars -except P2 out filenum fps;
 
@@ -142,7 +153,7 @@ save('PMA_posthoc_analysis.mat', 'out');
 %% Part 6:  plotting
 
 fnames = fieldnames(out);
-for i = 1:length(fieldnames(out))
+for i = 1:4
     subplot(2,2,i)
     datamat = cell2mat(out.(fnames{i})(:,2:end));
     legmat = out.(fnames{i})(:,1);
