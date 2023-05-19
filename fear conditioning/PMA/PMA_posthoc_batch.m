@@ -17,7 +17,7 @@
 
 clear; 
 %% Params
-fps = 50; % fps of behavior recording
+fps = 49.97; % fps of behavior recording
 dur_tone = 30; % (s) duration of tone
 dur_shock = 2; % (S) duration of shock
 
@@ -136,6 +136,21 @@ for i = 1:length(avoids)
 end
 avoids = avoids';
 
+figure;
+datamat = avoids;
+x = 1:size(datamat,2);
+hold on
+plot(x,datamat, '-o');
+xlabel('tone');
+ylim([-0.5 1.5]);
+xlim([0 size(avoids,2)+1])
+yticks([0 1]);
+yticklabels({'shock', 'avoid'});
+title([id ' shock avoids']);
+savename = [id 'avoids.fig'];
+savefig(savename);
+close;
+
 %% Part 5: batch output
 out.tone_frz(filenum,:) = [{id}, num2cell(tone_frz)];
 out.per_platform_frz(filenum,:) = [{id}, num2cell(per_tpf)];
@@ -170,5 +185,3 @@ end
     savename = 'PMA_plots.fig';
     savefig(savename);
     close;
-% plot freezing during tone
-
