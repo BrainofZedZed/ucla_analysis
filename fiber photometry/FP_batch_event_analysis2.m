@@ -8,7 +8,6 @@
 % subject folders. Within each subject folder should be the experiment
 % file, the BehDEPOT analysis output, and the TDT recording folder. 
 %% To use:
-% Edit the 'USER DEFINED' sections, including ln 87 and 88 (event bouts), 
 % Choosing which analyses / plots to perform.
 % single animals data (including signal (sig),
 % signal-aligned-to-behavior-frames (bhsig), behavior bouts (bouts), and
@@ -26,7 +25,7 @@ P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful fo
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 
-bouts_name = 'CSm'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
+bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 %% REGISTER TDT TTL AND BEHDEPOT CUE NAME
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
@@ -37,18 +36,19 @@ P2.cue = {'PC0_', 'CSp'};
 %% USER DEFINED PLOTTING & ANALYSIS
 P2.do_lineplot = true;
 P2.do_heatmap = true;
-P2.do_vectorplot = false;
+P2.do_vectorplot = false; % DOESNT WORK
+
 P2.do_peak = true;
 P2.do_auc = true;
 P2.save_analysis = true; % true if save details of analysis
 P2.skip_prev_analysis = false; % true if not redo previous analysis
 
 % PMA specific analyses
-P2.do_platform_heatmap = false;
+P2.do_platform_heatmap = true;
 P2.do_auc_shocktrials = false;
 P2.do_platform = false;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
-P2.do_reward = false; % averages over reward frames
+P2.do_reward = false; % averages over reward frames % DOESNT WORK
 
 %% USER DEFINED BOUTS FOR ANALYSIS
 
