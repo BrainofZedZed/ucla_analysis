@@ -24,7 +24,7 @@ dur_shock = 2; % (S) duration of shock
 P2.remove_baseline_tones = 0;  % if true, removes baseline tones from analysis
 P2.baseline_tones = 3;  % number of baseline tones not paired with shock
 
-P2.do_plot = false; % whether or not to plot some of the measurements. possible broken 20230526
+P2.do_plot = true; % whether or not to plot some of the measurements. possible broken 20230526
 
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
@@ -187,8 +187,8 @@ save('PMA_posthoc_analysis.mat', 'out');
 
 if P2.do_plot
     fnames = fieldnames(out);
-    for i = 1:4
-        subplot(2,2,i)
+    for i = 1:6
+        subplot(2,3,i)
         datamat = cell2mat(out.(fnames{i})(:,2:end));
         legmat = out.(fnames{i})(:,1);
         x = 1:size(datamat,2);
