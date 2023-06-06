@@ -1,10 +1,5 @@
-% Version 1.5.1
-% last update:  2022 10 18
-% integrated reward pump and reward port light
-% Fear conditioning script
-% started ZZ 5/13/21
-% Goal:  make fear conditioning script to work with modern MATLAB Arduino
-% interface, and provide way to also do light cue
+% in this version:  tone+laser+shock (doStimShockLaser) hardcoded to
+% deliver laser just around shock, 1s before shock til 1s after shock
 
 % hardware setup on arduino:  pin 4 - shock, pin 3 - CS+, pin 5, CS- , 
 % pin 6 - laser, pin 7 - light, pin 13, miniscope trigger
@@ -727,8 +722,6 @@ end
 function ts = doStimShockLaser(cs, csP, a, tonep, lightp, shockp, cs_dur, us_dur, optop, ts, reward_flag, rewardp, pins)
     global first_csp
     global first_csm    
-    a.writeDigitalPin(optop, 1);
-    ts.laser_on = [ts.laser_on; clock];
     
     if ismember(csP.name, ["Tone", "FM"])
         if isequal(csP.name, 'Tone')
@@ -799,8 +792,12 @@ function ts = doStimShockLaser(cs, csP, a, tonep, lightp, shockp, cs_dur, us_dur
         end
         flickerLight(csP.flicker_freq, csP.light_dc, a, lightp, cs_dur);
     end
-   %%
-    pause(cs_dur-us_dur);
+   %% turn laser on 1s before shock, leave on til 1s after
+    pause(cs_dur-us_dur-1);
+    a.writeDigitalPin(optop, 1);
+    ts.laser_on = [ts.laser_on; clock];
+    pause(1);
+    pause(us_dur);
 
     a.writeDigitalPin(shockp, 1);
     ts.us_on = [ts.us_on; clock];
@@ -821,6 +818,7 @@ function ts = doStimShockLaser(cs, csP, a, tonep, lightp, shockp, cs_dur, us_dur
         a.writeDigitalPin(pins.reward_lightp,1);
     end
     
+    pause(1);
     a.writeDigitalPin(optop,0);
     ts.laser_off = [ts.laser_off; clock];   
 end
