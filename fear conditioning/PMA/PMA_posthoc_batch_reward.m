@@ -25,7 +25,7 @@ P2.remove_baseline_tones = 0;  % if true, removes baseline tones from analysis
 P2.baseline_tones = 3;  % number of baseline tones not paired with shock
 
 P2.do_plot = true; % whether or not to plot some of the measurements. possible broken 20230526
-
+P2.do_implant_in_reward = false; % makes new ROI detection, looking for ROI 'reward' using part 'Implant'
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
 P2.script_dir = pwd; % directory with script files (avoids requiring changes to path)
@@ -57,6 +57,8 @@ load(expf.name); % load experiment file into E struct
 bdf = dir('*_analyzed*'); % behdepot folder
 cd([bdf.folder '\' bdf.name]); % move to behdepot output folder
 load('Behavior.mat');
+
+
 %% load animal data
 id = exp_ID; % load ID
 
@@ -66,9 +68,26 @@ frz_vec = Behavior.Freezing.Vector;
 pf_vec = Behavior.Spatial.platform.inROIvector;
 
 if P2.remove_baseline_tones
-    tone_bouts = tone_bouts(P2.baseline_tones+1:end);
+    tone_bouts = tone_bouts(P2.baseline_tones+1:end,:);
 end
 
+%% track implant in reward
+if P2.do_implant_in_reward
+    load('Tracking.mat');
+    loc = Tracking.Smooth.Head;
+    reward_roi_num = 0;
+    load('Params.mat');
+    for i = 1:numel(Params.roi_name)
+        if isequal(Params.roi_name{1,i}, 'reward')
+            reward_roi_num = i;
+        end
+    end
+    
+    reward_roi = Params.roi{1,reward_roi_num};
+    in_roi = inpolygon(loc(1,:), loc(2,:), reward_roi(:,1), reward_roi(:,2));  % find frames when location is within ROI boundaries
+    Behavior.Spatial.reward_head = in_roi;
+    save('Behavior.mat', 'Behavior');
+end
 
 %% Part 1: percent of tone spent freezing
 tone_frz = cell2mat(Behavior.Intersect.TemBeh.CSp.Freezing.PerBehDuringCue);
@@ -78,6 +97,7 @@ if P2.remove_baseline_tones
 end
 
 tone_frz = tone_frz*100;
+tone_frz_avg = mean(tone_frz);
 
 %% Part 2: percent of tone spent freezing on platform
 
@@ -88,6 +108,8 @@ for i = 1:length(tone_bouts)
     i_pf_frz = find(i_pf & i_frz);
     tone_pf_frz(i) = length(i_pf_frz)/length(i_pf)*100;
 end
+
+tone_pf_frz_avg = mean(tone_pf_frz);
 
 %% Part X: percent of tone spent freezing off platform
 
@@ -100,7 +122,7 @@ for i = 1:length(tone_bouts)
     tone_off_pf_frz(i) = length(i_pf_frz)/length(i_pf_off)*100;
 end
 
-
+tone_off_pf_frz_avg = mean(tone_off_pf_frz);
 
 %% Part 3:  percent time on platform, per tone
 on_pf = Behavior.Spatial.platform.inROIvector;
@@ -119,6 +141,7 @@ if P2.remove_baseline_tones
     per_tp_tone = per_tp_tone(P2.baseline_tones+1:end);
 end
 per_tp_tone = per_tp_tone*100;
+per_pf_tone_avg = mean(per_tp_tone);
 
 %% Part 4:  latency to platform, per tone
 %pf_tone_vec = Behavior_Filter.Intersect.ROIduringCue_Vector.CSp_platform;
@@ -143,6 +166,8 @@ if P2.remove_baseline_tones
     first_pf = first_pf(P2.baseline_tones+1:end);
 end
 
+first_pf_avg = mean(first_pf);
+
 %% Part 4b: calculating successful avoids
 shock_start_frames = cueframes.US(:,1);
 avoids = zeros(size(shock_start_frames));
@@ -152,6 +177,8 @@ for i = 1:length(avoids)
     end
 end
 avoids = avoids';
+
+avoids_avg = mean(avoids);
 
 figure;
 datamat = avoids;
@@ -168,6 +195,24 @@ savename = [id 'avoids.fig'];
 savefig(savename);
 close;
 
+%% Part ?: calculating ITI time on platform
+on_pf = Behavior.Spatial.platform.inROIvector;
+tone_on_vec = Behavior.Temporal.CSp.Vector;
+
+% find when tone is off and in platform
+iti_pf = find(on_pf == 1 & tone_on_vec == 0);
+
+% calculate proportion ITI time spent on platform
+iti_dur = length(tone_on_vec) - sum(tone_on_vec);
+iti_pf_proportion = sum(iti_pf) / iti_dur;
+
+%% Calculate time in reward zone
+if P2.do_implant_in_reward
+    reward_time = sum(Behavior.Spatial.reward_head)/length(Behavior.Spatial.reward_head);
+else
+    reward_time = NaN;
+end
+
 %% Part 5: batch output
 out.per_tone_frz(filenum,:) = [{id}, num2cell(tone_frz)];
 out.per_tone_platform_frz(filenum,:) = [{id}, num2cell(tone_pf_frz)];
@@ -175,6 +220,15 @@ out.per_tone_off_platform_frz(filenum,:) = [{id}, num2cell(tone_off_pf_frz)];
 out.per_time_platform(filenum,:) = [{id}, num2cell(per_tp_tone)];
 out.plat_latency(filenum,:) = [{id}, num2cell(first_pf)];
 out.avoids(filenum,:) = [{id}, num2cell(avoids)];
+out.per_iti_platform(filenum,:) = [{id}, num2cell(iti_pf_proportion)];
+out.per_reward_zone(filenum,:) = [{id}, num2cell(reward_time)];
+out.avg.tone_frz(filenum,:) = [{id}, num2cell(tone_frz_avg)];
+out.avg.tone_pf_frz(filenum,:) = [{id}, num2cell(tone_pf_frz_avg)];
+out.avg.tone_off_pf_frz_avg(filenum,:) = [{id}, num2cell(tone_off_pf_frz_avg)];
+out.avg.per_pf_time_tone_avg(filenum,:) = [{id}, num2cell(per_pf_tone_avg)];
+out.avg.plat_latency(filenum,:) = [{id}, num2cell(first_pf_avg)];
+out.avg.avoids(filenum,:) = [{id}, num2cell(avoids_avg)];
+
 
 clearvars -except P2 out filenum fps;
 

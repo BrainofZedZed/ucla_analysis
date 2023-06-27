@@ -1,39 +1,62 @@
-id = 'ZZ189 tonehab CS+';
- 
-laser_off = [1,3];
-laser_on = [2,4];
+cs = bouts_name;
+id = ['ZZ168 D1' cs];
 
-zsig_laseroff = zall(laser_off,:);
-zsig_laseron = zall(laser_on,:);
+P2.fp_fps*P2.trange_peri_bout(1);
+t0 = P2.fp_fps*P2.trange_peri_bout(1);
+t1 = P2.fp_fps*P2.trange_peri_bout(2);
+t1 = length(zall)-t1;
+
+laser_off = [1:2:length(bouts)];
+laser_on = [2:2:length(bouts)];
+zsig_laseroff = zall(1:2:end,:);
+zsig_laseron = zall(2:2:end,:);
+zsig_laseron = zsig_laseron - mean(zsig_laseron(:,1:t0),2);
+zsig_laseroff = zsig_laseroff - mean(zsig_laseroff(:,1:t0),2);
+
 
 avg_off = mean(zsig_laseroff,1);
 avg_on = mean(zsig_laseron,1);
 
 figure; 
-plot(zall(1,:), 'Color', 'k'); hold on;
-plot(zall(3,:), 'Color', [0.5, 0.5, 0.5]); %gray
-plot(zall(2,:), 'Color', 'r');  % red
-plot(zall(4,:), 'Color', [1, 0.5, 0.5']); % light red
+hold on;
+
+plot(avg_on,'Color', 'r');
+plot(avg_off, 'Color', 'k');
+
+% plot(zall(1,:), 'Color', 'k'); hold on;
+% plot(zall(3,:), 'Color', [0.5, 0.5, 0.5]); %gray
+% plot(zall(2,:), 'Color', 'r');  % red
+% plot(zall(4,:), 'Color', [1, 0.5, 0.5']); % light red
 xline((P2.fp_fps*P2.trange_peri_bout(1)), ':', 'LineWidth', 2);
 xline((length(zall)-(P2.fp_fps*P2.trange_peri_bout(2))), ':', 'LineWidth', 2);
-legend('Laser Off', 'Laser Off', 'Laser On', 'Laser On', 'Tone On', 'Tone Off');
+legend('Laser On', 'Laser Off', 'Tone On', 'Tone Off');
 xlabel('frames at 102 fps');
-ylabel('sig (zscore)');
+ylabel('avg sig (zscore)');
 hold off;
 title(id);
-savefig('tone_response_laser.fig');
+savefig(['avg_', cs, '_response_laser.fig']);
 
-%%
-P2.fp_fps*P2.trange_peri_bout(1);
-t0 = P2.fp_fps*P2.trange_peri_bout(1);
-peaks_trial = max(zall(:,t0:t0+2*P2.fp_fps)');
+%% peaks
+peaks_laser_on = max(zsig_laseron(:,t0:t0+2*P2.fp_fps)');
+peaks_laser_off = max(zsig_laseroff(:,t0:t0+2*P2.fp_fps)');
+
+ntrials = length(peaks_laser_on);
 
 figure;
-scatter([1,1],[peaks_trial(1,[1,3])],'black', 'filled'); hold on;
-scatter([2,2],[peaks_trial(1,[2,4])],'red','filled');
+scatter(ones([1,ntrials]),peaks_laser_off,'black', 'filled'); hold on;
+scatter((ones([1,ntrials])*2),peaks_laser_on,'red','filled');
 xlim([0 3]);
 xticks([1,2]);
 xticklabels({'Laser Off', 'Laser On'});
 ylabel('Peak response (zscore)');
 title(id);
-savefig('peak_response_laser.fig');
+savefig(['peak_response_laser' cs '.fig']);
+
+%% AUC
+laser_off_auc = trapz(avg_off(t0:t1));
+laser_on_auc = trapz(avg_on(t0:t1));
+
+%% save
+save([cs '_laser_posthoc_analysis.mat']);
+
+clear;

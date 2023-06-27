@@ -1,25 +1,25 @@
+%% calcCueFrames_batch
+%% 
+%% run on batch files set up for BehDEPOT, prior to running BehDEPOT.
+
+
+clear;
 %% Params
 doCSV = 0;  % 0 or 1, save to csv
-fps = 50; % load fps, leave blank to autoload
+fps = 49.97; % load fps, leave blank to autoload
 
-% manual adjustment to account for lag in PointGray Chameleon3 camera
-% numbers based on experimental validation, apprx 20.01 ms between frames
-% at 50 fps
-if fps == 50
-    fps = 49.975;
-end
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
-P.script_dir = pwd; % directory with script files (avoids requiring changes to path)
+P2.script_dir = pwd; % directory with script files (avoids requiring changes to path)
 disp('Select directory containing other directories for analysis'); % point to folder for analysis
-P.video_directory = uigetdir('','Select the directory containing folders for analysis'); %Directory with list of folders containing videos + tracking to analyze
-P.video_folder_list = prepBatch(string(P.video_directory)); %Generate list of videos to analyze
+P2.video_directory = uigetdir('','Select the directory containing folders for analysis'); %Directory with list of folders containing videos + tracking to analyze
+P2.video_folder_list = prepBatch(string(P2.video_directory)); %Generate list of videos to analyze
+vid_fol_list = P2.video_folder_list;
 
-
-for j = 1:length(P.video_folder_list)
+for j = 1:length(P2.video_folder_list)
     % Initialize 
-    current_video = P.video_folder_list(j);    
-    video_folder = strcat(P.video_directory, '\', current_video);
+    current_video = P2.video_folder_list(j);    
+    video_folder = strcat(P2.video_directory, '\', current_video);
     cd(video_folder) %Folder with data files   
 %%
 % assume save to CSV unless indicated otherwise
@@ -31,10 +31,32 @@ end
 data = dir('*.mat');
 load([data.folder '\' data.name]);
 
-% get name of vid file
-vid = dir('*.avi');
-if isempty(vid)
-    vid = dir('*.mp4');
+% check for camera timestamp in ts struct
+if isfield(ts, 'camera_on')
+    if ~isempty(ts.camera_on)
+        dt = ts.camera_on;
+        vid0 = dt;
+    end
+    
+elseif  ~exist('dt','var')
+        % get name (of vid file
+    vid = dir('*.avi');
+    if isempty(vid)
+        vid = dir('*.mp4');
+    end
+    dt = regexp(vid.name,'....-..-..-......');
+    dt = vid.name(dt:dt+16);
+    
+        % format start time
+    d1 = string(dt(1:4));
+    d2 = string(dt(6:7));
+    d3 = string(dt(9:10));
+    d4 = string(dt(12:13));
+    d5 = string(dt(14:15));
+    d6 = string(dt(16:17));
+    vid0 = [d1, d2, d3, d4, d5, d6];
+else
+    dt = char(dt);
 end
 
 % load vid file and get frame rate if not inputted
@@ -43,22 +65,9 @@ if ~exist('fps','var')
     fps = thisvid.framerate;
 end
 
-% get start time from vid title if not inputted
-if ~exist('dt','var')
-    dt = regexp(vid.name,'....-..-..-......');
-    dt = vid.name(dt:dt+16);
-else
-    dt = char(dt);
-end
 
-% format start time
-d1 = string(dt(1:4));
-d2 = string(dt(6:7));
-d3 = string(dt(9:10));
-d4 = string(dt(12:13));
-d5 = string(dt(14:15));
-d6 = string(dt(16:17));
-vid0 = [d1, d2, d3, d4, d5, d6];
+
+
 
 %% convert timestamps to video frames
 % four possible timestamps:  csp, csm, us, laser
@@ -148,9 +157,11 @@ save([data.folder '\' data.name],'cueframes', '-append');
 disp('appended cueframes into "cueframes" struct in .mat file');
 disp(['for ' pwd]);
 
-clearvars -except doCSV fps  P j;
+clearvars -except doCSV fps P2 j;
     
 end
+
+disp('done with all folders');
 
 function video_folder_list = prepBatch(video_directory)
     cd(video_directory)
