@@ -72,14 +72,14 @@ ydim = Params.Video.frameHeight; % y-dimension of video (pixel)
 tonetimes = Behavior.Temporal.(name_of_tone).Bouts;
 %tonetimes = tonetimes(4:end,:);  % edit to exclude certain tones (eg (4,:end,:) to include only 4th tone through end
 
-% X = Tracking.Smooth.BetwLegs(1,:);
-% Y = Tracking.Smooth.BetwLegs(2,:);
-% location = [X;Y];
+X = Tracking.Smooth.BetwLegs(1,:);
+Y = Tracking.Smooth.BetwLegs(2,:);
+location = [X;Y];
 
 % alternative:  plot nose location
-X = Tracking.Smooth.Nose(1,:);
-Y = Tracking.Smooth.Nose(2,:);
-location = [X;Y];
+% X = Tracking.Smooth.Nose(1,:);
+% Y = Tracking.Smooth.Nose(2,:);
+% location = [X;Y];
 
 %% make figure and save image to variable im
 fig = figure;

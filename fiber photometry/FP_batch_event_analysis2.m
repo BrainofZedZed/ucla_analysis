@@ -25,7 +25,9 @@ P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful fo
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 
-bouts_name = 'CSm'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
+bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
+
+
 %% REGISTER TDT TTL AND BEHDEPOT CUE NAME
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
@@ -44,7 +46,7 @@ P2.save_analysis = true; % true if save details of analysis
 P2.skip_prev_analysis = false; % true if not redo previous analysis
 
 % PMA specific analyses
-P2.do_platform_heatmap = false;
+P2.do_platform_heatmap = true;
 P2.do_auc_shocktrials = false;
 P2.do_platform = false;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
@@ -102,8 +104,7 @@ for j = 1:length(P2.video_folder_list)
     load('Behavior.mat');
     load('Params.mat');
     cd(basedir);
-    exp_file = dir('*-*-*_*-*-*.mat');
-    load(exp_file.name); % load experiment file
+  
 
 
     bouts = Behavior.Temporal.(bouts_name).Bouts;
@@ -119,9 +120,12 @@ for j = 1:length(P2.video_folder_list)
     load('Behavior.mat');
     load('Params.mat');
     cd(basedir);
-
+    exp_file = dir('*-*-*_*-*-*.mat');
+    load(exp_file.name); % load experiment file
     id = exp_ID; % load ID
     numFrames = Params.numFrames;
+    fps = Params.Video.frameRate;
+
     %% load TDT data
     % get list of folders
     files = dir(basedir);
@@ -162,7 +166,6 @@ for j = 1:length(P2.video_folder_list)
     Y_fit_all = bls_all(1) .* s405 + bls_all(2);
     sig = s465 - Y_fit_all;
 
-    beh2fp = hardCodebeh2fpClean(id, beh2fp);
     bhsig = sig(beh2fp);
 
     %% Calculate signal over epocs
@@ -392,11 +395,10 @@ for j = 1:length(P2.video_folder_list)
         end
    %%     
         if P2.do_platform_heatmap
-            %% platform entrie
-            pf_time = 4; % seconds after platform entry to visualize
-            pre_pf_time = 2; % seconds before platform to visualize
-            pre_pf_baseline = 2; % seconds before pre_pf to use as baseline
-            fps = 50;
+            %% platform entries
+            pf_time = P2.trange_peri_bout(2); % seconds after platform entry to visualize
+            pre_pf_time = P2.trange_peri_bout(1); % seconds before platform to visualize
+            pre_pf_baseline = abs(P2.baseline_per(1)); % seconds before pre_pf to use as baseline
             
             pf_bout_dur = Behavior.Spatial.platform.Bouts(:,2) - Behavior.Spatial.platform.Bouts(:,1);
             pf_idx = find(pf_bout_dur>(pf_time*fps));
@@ -449,16 +451,15 @@ for j = 1:length(P2.video_folder_list)
                 close;
                 clear fig;
     
-                %% platform exits
-                pf_time = 4; % seconds after platform entry to visualize
-                pre_pf_time = 2; % seconds before platform to visualize
-                pre_pf_baseline = 2; % seconds before pre_pf to use as baseline
-                fps = 50;
+                %% platform exits               
+                pf_time = P2.trange_peri_bout(2); % seconds after platform entry to visualize
+                pre_pf_time = P2.trange_peri_bout(1); % seconds before platform to visualize
+                pre_pf_baseline = abs(P2.baseline_per(1)); % seconds before pre_pf to use as baseline
                 
                 pf_bout_dur = Behavior.Spatial.platform.Bouts(:,2) - Behavior.Spatial.platform.Bouts(:,1);
                 pf_idx = find(pf_bout_dur>(pf_time*fps));
                 pf_exit = Behavior.Spatial.platform.Bouts(:,2);
-                total_length = (pf_time+abs(pre_pf_time))*fps+1;
+                total_length = (pf_time+pre_pf_time)*fps+1;
                 
                 % test if first or end point will exceed recording limit
                 omega = pf_exit(pf_idx(end)) + total_length;
@@ -486,7 +487,7 @@ for j = 1:length(P2.video_folder_list)
                 
                 % make heatmap
                 fig = figure;
-                imagesc(zall, [-5 5])
+                imagesc(zall3, [-5 5])
                 colormap('parula'); 
                 c1 = colorbar; 
                 title(sprintf('Z-Score Heat Map, %d Platform EXITS at dashed line', size(pf_idx,1)));
@@ -910,7 +911,6 @@ for j = 1:length(P2.video_folder_list)
 
             % find which in tone entries were successful avoids
             ops2 = on_platform_shock;
-            ops(1:4) = 0; % hardcode change to exclude baseline tones
             tone_avoid_vec = zeros(size(tone_vec));
             for i = 1:length(ops2)
                 if ops2(i)
@@ -1150,19 +1150,4 @@ ynew = 1:numFrames;
 ypred = predict(mdl,ynew');
 beh2fp=round(ypred); % round resultant intperolation so the indices are integers
 beh2fp=beh2fp';
-end
-
-function beh2fp = hardCodebeh2fpClean(id, beh2fp)
-    if isequal(id,'zz170_D2_recall')
-        beh2fp(1:1000)=1;
-    end
-    if isequal(id, 'zz171_D1_conditioning')
-        beh2fp(1:500)=1;
-    end
-    if isequal(id, 'zz172_D1_conditioning')
-        beh2fp(1:300)=1;
-    end
-    if isequal(id, 'zz173_D1_conditioning')
-        beh2fp(1:500)=1;
-    end
 end
