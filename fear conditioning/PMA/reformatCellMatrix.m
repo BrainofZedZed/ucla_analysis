@@ -20,9 +20,7 @@ function reformattedMatrix = reformatCellMat(cellMatrix)
         entry = cellMatrix{i, 1};
         subjectID = entry(1:5);
         testDay = str2double(entry(end));
-        if testDay == 4
-            testDay = 3;
-        end
+
         value = cellMatrix{i, 2};
 
         % Store the reformatted values in the corresponding row of the

@@ -70,6 +70,7 @@ ydim = Params.Video.frameHeight; % y-dimension of video (pixel)
 
 % ADJUST THIS LINE TO POINT TOWARD TONE EVENT BOUTS OF INTEREST
 tonetimes = Behavior.Temporal.(name_of_tone).Bouts;
+shocktimes = Behavior.Temporal.US.Bouts;
 %tonetimes = tonetimes(4:end,:);  % edit to exclude certain tones (eg (4,:end,:) to include only 4th tone through end
 
 X = Tracking.Smooth.BetwLegs(1,:);
@@ -99,7 +100,7 @@ for idx = 1:length(tonetimes)
     end
 
     % plots shock deliveries
-    loc = location(:,tonetimes(idx,2)-(fps*shock_dur):tonetimes(idx,2));
+    loc = location(:,shocktimes(idx,1):shocktimes(idx,2));
     xloc = loc(1,:);
     yloc = loc(2,:);
     ploc = Params.roi{1};
