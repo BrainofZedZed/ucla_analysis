@@ -28,7 +28,7 @@ P2.baseline_per = [P2.trange_peri_bout(1), round(P2.trange_peri_bout(1)/2)]; % b
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
-P2.peakWnd = []; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
+P2.peakWnd = [0 5]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
@@ -139,9 +139,7 @@ for j = 1:length(P2.video_folder_list)
     fps = Params.Video.frameRate;
 
     %%%%%%%%%%%%%%%%%%%%%%%%
-    %%
     %% DO ANALYSIS
-    %% 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %% load, clean, transform, align FP data
@@ -471,6 +469,7 @@ function [P2, zall] = calcSignalEpoc(Params, P2, bouts, data, bhsig)
             zb = mean(bhsig((beh_ts(i,1)-bl(1):beh_ts(i,1)-bl(2)))); % baseline period mean
             zsd = std(bhsig((beh_ts(i,1)-bl(1):beh_ts(i,1)-bl(2)))); % baseline period stdev
             zall(i,:)=(bhsig(beh_ts(i,1):beh_ts(i,2)-1) - zb)/zsd; % Z score per bin
+            zall(i,:)=smooth(zall(i,:),25);
         end
    
         % get fp fps
@@ -621,8 +620,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function go_lineplot(zall, bouts_name, vertLines, P2)
 
-    % Subtract DC offset to get signals on top of one another
+    % Subtract DC offset to get signals on top of one another and adjust
+    % baseline to be zeroed
     zall_offset = zall - mean(mean(zall));
+    for i = 1:size(zall,1)
+        zall_offset(i,:) = zall_offset(i,:) - mean(zall_offset(1:50));
+        zall_offset(i,:) = smooth(zall_offset(i,:),25);
+    end
     mean_zall = mean(zall_offset);
     std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
     sem_zall = std(zall_offset)/sqrt(size(zall_offset,1));
@@ -699,8 +703,6 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
  function [zall_pf_entry, zall_pf_exit] = go_platform_analysis(bhsig, Behavior, P2)
-    P2.beh_fps = 50;
-    pf_bouts = Behavior.Spatial.platform.Bouts;
     pf_bout_dur = Behavior.Spatial.platform.Bouts(:,2) - Behavior.Spatial.platform.Bouts(:,1);     
     
     pf_time = P2.trange_peri_bout(2); % seconds after platform encounter to visualize
@@ -708,6 +710,17 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     pre_pf_baseline = abs(P2.baseline_per(1)); % seconds before pre_pf to use as baseline
 
     pf_idx = find(pf_bout_dur>(pf_time*P2.beh_fps));
+
+    % test to see if entry happens immediately following or during a shock,
+    % reject platform entry if so
+    us_vec = Behavior.Temporal.US.Vector;
+    pf_idx_reject = [];
+    for i = 1:length(pf_idx)
+        if sum(us_vec(pf_entry(pf_idx(i))-(2*P2.beh_fps):pf_entry(pf_idx(i)))) > 0
+            pf_idx_reject(i) = i;
+        end
+    end
+    pf_idx(pf_idx_reject) = [];
     
     pf_entry = Behavior.Spatial.platform.Bouts(:,1);
     pf_exit = Behavior.Spatial.platform.Bouts(:,2);
@@ -739,6 +752,8 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
         s1 = pf_entry(pf_idx(i)) - (pre_pf_time*P2.beh_fps);
         s2 = pf_entry(pf_idx(i)) + (pf_time*P2.beh_fps);
         zall_pf_entry(i,:)=((bhsig(s1:s2-1)- zb) / zsd);
+        zall_pf_entry(i,:)=smooth(zall_pf_entry(i,:),25);
+        zall_pf_entry(i,:) = zall_pf_entry(i,:) - mean(zall_pf_entry(i,1:pre_pf_baseline*P2.beh_fps));
     end
     
     % make heatmap
@@ -754,10 +769,13 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
         s1 = pf_exit(pf_idx(i)) - (pre_pf_time*P2.beh_fps);
         s2 = pf_exit(pf_idx(i)) + (pf_time*P2.beh_fps);
         zall_pf_exit(i,:)=((bhsig(s1:s2-1)- zb) / zsd);
+        zall_pf_exit(i,:)=smooth(zall_pf_exit(i,:),25);
+        zall_pf_exit(i,:) = zall_pf_exit(i,:) - mean(zall_pf_exit(i,1:pre_pf_baseline*P2.beh_fps));
     end
     
     % make heatmap
     go_heatmap(zall_pf_exit, 'Platform Exit', [pre_pf_time*P2.beh_fps], P2);
+    go_lineplot(zall_pf_exit,'Platform Exit', [pre_pf_time*P2.beh_fps], P2);
 
     end
 end
@@ -839,6 +857,69 @@ function [zall_pf_nontone, zall_pf_during_tone] = go_platform_tone_intersect(bhs
     zall_pf_tone = zall_pf(find(move_in_tone),:);
 
     %
+    % get just entries NOT during tone
+    zall_pf_nontone = zall_pf(find(move_in_tone==0),:);
+
+    % get entries just during tones with successful avoids
+    zall_pf_during_tone = zall_pf(find(avoid_pf_entry),:);
+
+    go_heatmap(zall_pf_nontone, 'Platform entries outside of tone', [P2.pre_pf_window], P2);
+    go_heatmap(zall_pf_during_tone, 'Platform entries during tone', [P2.pre_pf_window], P2);
+
+    go_lineplot(zall_pf_nontone, 'Platform entries outside of tone', [P2.pre_pf_window], P2);
+    go_lineplot(zall_pf_during_tone, 'Platform entries during tone', [P2.pre_pf_window], P2);
+
+    %% redo with platform exits
+    % get which platform entry occurs during a tone
+    for i = 1:size(bouts_pf,1)
+        if tone_vec(bouts_pf(i,2))
+            move_in_tone(i) = 1;
+        end
+    end
+
+    % tone avoid vec codes tones which were successful avoids
+    % now need use bouts for pf, intersect with tone avoid vec
+    avoid_pf_entry = zeros(size(move_in_tone));
+    for i = 1:size(bouts_pf,1)
+        tmp = sum(tone_avoid_vec(bouts_pf(i,1):bouts_pf(i,2)));
+        if tmp > 0
+            avoid_pf_entry(i) = 1;
+        else
+            avoid_pf_entry(i) = 0;
+        end
+    end
+
+    pre_pf_bl = [300 150]; % pre platform time in beh frames to baseline to
+    P2.pre_pf_window = 250; % time pre platform entry to gather in beh frames
+
+    % test if first or end point will exceed recording limit
+    omega = bouts_pf(end,2) + min_dur-1;
+    if omega > length(bhsig)
+        bouts_pf = bouts_pf(1:end-1,:);
+        move_in_tone = move_in_tone(1:end-1);
+        avoid_pf_entry = avoid_pf_entry(1:end-1);
+    end
+
+    alpha = bouts_pf(1,1) - pre_pf_bl(1);
+    if alpha < 1
+        bouts_pf = bouts_pf(2:end,:);
+        move_in_tone = move_in_tone(2:end,:);
+        avoid_pf_entry = avoid_pf_entry(2:end);
+
+    end
+
+   % get signal for all trials and zscore
+    zall_pf = zeros(size(bouts_pf,1),min_dur+P2.pre_pf_window);
+
+    for i = 1:size(zall_pf,1)
+        zb = mean(bhsig(bouts_pf(i,1)-pre_pf_bl(1):bouts_pf(i,1)-pre_pf_bl(2))); % baseline period mean
+        zsd = std(bhsig(bouts_pf(i,1)-pre_pf_bl(1):bouts_pf(i,1)-pre_pf_bl(2))); % baseline period stdev
+        zall_pf(i,:)=(bhsig((bouts_pf(i,1)-P2.pre_pf_window):bouts_pf(i,1)+min_dur-1) - zb)/zsd; % Z score per bin
+    end
+
+    % get just entries during tonem excluding baseline
+    zall_pf_tone = zall_pf(find(move_in_tone),:);
+
     % get just entries NOT during tone
     zall_pf_nontone = zall_pf(find(move_in_tone==0),:);
 
