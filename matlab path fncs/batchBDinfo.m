@@ -1,3 +1,11 @@
+% function used to pull out batched data from BehaviorDEPOT Behavior.mat outputs
+% INPUT: Behavior fields (and subfields) to extract as char strings
+% OUTPUT: cell matrix containing experiment ID in col1, with other columns
+% containing input data
+% example:  output = batchBDinfo('Behavior.Spatial.platform.inROIvector',
+% 'Behavior.Temporal.CSp.Vector')
+
+
 function outputMatrix = batchBDinfo(varargin)
     % Prompt the user to select a directory
     selectedDir = uigetdir('', 'Please select a directory for batch analysis');
