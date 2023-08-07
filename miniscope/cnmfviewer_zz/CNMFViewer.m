@@ -1,0 +1,138 @@
+function CNMFViewer(A, C, S)
+% homebrew version of CNMFViewer from Minian
+% 2023 08 01 ZZ
+    [Nx, Mx, Z] = size(A);
+    [Zx, ~] = size(C);
+    numItemsToDisplay = 5;
+    currentPage = 1;
+    closestZ = [];
+    displayIDs = 1:Z;
+
+    if Z ~= Zx
+        error('Z dimension must match for A and C.');
+    end
+
+    centers = zeros(Z, 2);
+    for zIdx = 1:Z
+        [row, col] = find(A(:, :, zIdx) > 0);
+        centers(zIdx, :) = [mean(row), mean(col)];
+    end
+
+    validZ = true(Z, 1); % Initially, all Z items are valid
+    mergeMapping = cell(Z, 1);
+    for i = 1:Z
+        mergeMapping{i} = i; % Initially, each item is in a separate group
+    end
+
+    distances = pdist2(centers, centers);
+
+    fig = figure('Name', 'Interactive Data Visualizer', 'Position', [100, 100, 1200, 800]);
+
+    axC = gobjects(numItemsToDisplay, 1);
+    for i = 1:numItemsToDisplay
+        axC(i) = axes(fig, 'Position', [0.6, 0.8 - 0.15*i, 0.3, 0.13]);
+    end
+
+    axA = axes(fig, 'Position', [0.1, 0.5, 0.3, 0.4]);
+    axBatchA = axes(fig, 'Position', [0.1, 0.05, 0.3, 0.4]);
+
+    buttonMerge = uicontrol('Style', 'pushbutton', 'String', 'Merge', 'Position', [100, 10, 100, 30], 'Callback', @(src, event) mergeData());
+    buttonDiscard = uicontrol('Style', 'pushbutton', 'String', 'Discard', 'Position', [200, 10, 100, 30], 'Callback', @(src, event) discardData());
+    buttonNormalize = uicontrol('Style', 'pushbutton', 'String', 'Normalize', 'Position', [300, 10, 100, 30], 'Callback', @(src, event) normalizeC());
+    buttonNext = uicontrol('Style', 'pushbutton', 'String', 'Next', 'Position', [400, 10, 100, 30], 'Callback', @(src, event) nextPage());
+    buttonBack = uicontrol('Style', 'pushbutton', 'String', 'Back', 'Position', [500, 10, 100, 30], 'Callback', @(src, event) previousPage());
+    buttonDone = uicontrol('Style', 'pushbutton', 'String', 'Done', 'Position', [600, 10, 100, 30], 'Callback', @(src, event) done());
+
+    checkboxes = gobjects(numItemsToDisplay, 1);
+
+    updateDisplay();
+
+    function mergeData()
+        selectedIdx = find([checkboxes.Value]);
+        selectedZ = closestZ(selectedIdx);
+        mergeID = min(displayIDs(selectedZ));
+        for z = selectedZ
+            mergeMapping{z} = mergeID; % Record the merge
+            displayIDs(z) = mergeID; % Update the display ID
+        end
+        updateDisplay();
+    end
+
+
+    function discardData()
+        selectedIdx = find([checkboxes.Value]);
+        selectedZ = closestZ(selectedIdx);
+        displayIDs(selectedZ) = -1;
+        updateDisplay();
+    end
+
+
+    function normalizeC()
+        minC = min(C, [], 2);
+        maxC = max(C, [], 2);
+        C = (C - minC) ./ (maxC - minC);
+        updateDisplay();
+    end
+
+    function nextPage()
+        currentPage = currentPage + 1;
+        updateDisplay();
+    end
+
+    function previousPage()
+        currentPage = max(1, currentPage - 1);
+        updateDisplay();
+    end
+
+   function done()
+        % Apply the merges
+        for z = 1:Z
+            if mergeMapping{z} ~= z && mergeMapping{z} ~= -1
+                C(mergeMapping{z}, :) = C(mergeMapping{z}, :) + C(z, :);
+                S(mergeMapping{z}, :) = S(mergeMapping{z}, :) + S(z, :);
+                A(:,:,mergeMapping{z}) = A(:,:,mergeMapping{z}) + A(:,:,z);
+                validZ(z) = false; % Mark the merged Z item as invalid
+            end
+        end
+        validZ(find(displayIDs==-1)) = 0;
+        finalC = C(validZ, :);
+        finalS = S(validZ, :);
+        finalA = A(:,:,validZ);
+        save('final_data.mat', 'finalC', 'finalS', 'finalA');
+        close(fig);
+    end
+
+
+    function updateDisplay()
+        delete(checkboxes);
+        checkboxes = gobjects(numItemsToDisplay, 1);
+
+        idxZ = (currentPage - 1) * numItemsToDisplay + 1;
+        sortedDistances = sort(distances(idxZ, :), 'ascend');
+        closestIdx = ismember(distances(idxZ, :), sortedDistances(2:numItemsToDisplay+1));
+        closestZ = find(closestIdx);
+
+        for i = 1:numItemsToDisplay
+            zIdx = closestZ(i);
+            plot(axC(i), C(zIdx, :), 'k');
+            title(axC(i), ['C Signal for N = ', num2str(displayIDs(zIdx))]); % Using displayIDs instead of zIdx
+            checkboxes(i) = uicontrol('Style', 'checkbox', 'Position', [750, 770 - 130 * i, 15, 15]);
+        end
+
+        imagesc(axA, sum(A(:,:,closestZ), 3));
+        colormap(axA, 'parula');
+        title(axA, 'Displayed footprints');
+
+        for i = 1:numItemsToDisplay
+            zIdx = closestZ(i);
+            [row, col] = find(A(:,:,zIdx) > 0);
+            if ~isempty(row) && ~isempty(col)
+                text(axA, mean(col), mean(row), num2str(zIdx), 'Color', 'w');
+            end
+        end
+
+        imagesc(axBatchA, sum(A, 3));
+        colormap(axBatchA, 'parula');
+        title(axBatchA, 'All footprints');
+    end
+end
