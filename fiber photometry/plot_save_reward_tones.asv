@@ -20,7 +20,19 @@
 
         load(fullfile(subDirPath, expFile.name),'zall', 'P2');
         P2.basedir = subDirPath;
-        save(fullfile(subDirPath, expFile.name), "P2",)
+
+        %zscore zall to [-5 0] seconds
+        bl = [200 250];
+        for t = 1:size(zall,1)
+            sig = zall(t,:);
+            zb = mean(sig(bl(1):bl(2)));
+            zsd = std(sig(bl(1):bl(2)));
+            zall(t,:) = (sig - zb)/zsd;
+            %zall_new(t,:)=smooth(zall_new(t,:),25);  % optional smoothing
+        end
+        zall_1s = zall;
+        save(fullfile(subDirPath, expFile.name), "zall_1s", "P2", '-append');
+
   
         % Find the '_analyzed' directory
         analyzedDir = dir(subDirPath);
@@ -47,10 +59,12 @@
         reward_vec = Behavior.Spatial.reward.inROIvector;
         pf_vec = Behavior.Spatial.platform.inROIvector;
 
+        % initialize tone divisions
         reward_tones = zeros(size(tone_on));
         pf_tones = zeros(size(tone_on));
         other_tones = zeros(size(tone_on));
 
+        % match tones with location
         for j = 1:length(tone_on)
             if reward_vec(tone_on(j))
                 reward_tones(j)=1;
@@ -61,12 +75,14 @@
             end
         end
 
+        % make struct to save data
         tone_onset_in_space = struct;
         tone_sig_by_onset_space.reward_onset = zall(find(reward_tones),:);
         tone_sig_by_onset_space.pf_onset = zall(find(pf_tones),:);
         tone_sig_by_onset_space.other_onset = zall(find(other_tones),:);
 
         save(fullfile(subDirPath, expFile.name), "tone_sig_by_onset_space", "-append")
+
 
         % make plots
         for k = 1:3
@@ -81,13 +97,14 @@
                 bouts_name = 'NonReward NonPF At Tone Onset';
             end
         
-        if ~isempty(zallz)
-            %% plot heatmap of tones
-            go_heatmap(zallz, bouts_name, [P2.pre_dur, P2.tone_dur+P2.pre_dur], P2);
-    
-            %% do lineplot of tones
-            go_lineplot(zallz, bouts_name, [P2.pre_dur, P2.tone_dur+P2.pre_dur], P2)
-        end
+            if ~isempty(zallz)
+                %% plot heatmap of tones
+                go_heatmap(zallz, bouts_name, [P2.pre_dur, P2.tone_dur+P2.pre_dur], P2);
+        
+                %% do lineplot of tones
+                go_lineplot(zallz, bouts_name, [P2.pre_dur, P2.tone_dur+P2.pre_dur], P2)
+            end
+
         end
        
     end
@@ -114,7 +131,7 @@
     xlabel(sprintf('frames (@ %d frames per second)', P2.beh_fps));
 
     filename = sprintf(['%s%s' '_' '%s%s'], P2.exp_ID, bouts_name);
-    filename = [filename 'HeatMap.fig'];
+    filename = [filename 'HeatMap_halfSecBL.fig'];
     filename = [P2.basedir '\' filename];
     saveas(fig, filename);
     close;
@@ -165,7 +182,7 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
 
     %save
     filename = sprintf(['%s%s' '_' '%s%s'], P2.exp_ID, bouts_name);
-    filename = [filename 'LinePlot.fig'];
+    filename = [filename 'LinePlot_halfSecBL.fig'];
     filename = [P2.basedir '\' filename];
     saveas(fig, filename);
     close;
@@ -192,12 +209,12 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     n3 = sprintf('%d', size(zall,1));
     ttl = [n1 ' average ' n2 ' response, ' n3 ' Trials'];
     title (ttl);
-    xlabel(sprintf('frames (@ %d frames per second)', round(P2.fp_fps)));
+    xlabel(sprintf('frames (@ %d frames per second)', round(P2.beh_fps)));
     ylabel('zscore')
     axis tight
     %save
      filename = sprintf(['%s%s' '_' '%s%s'], P2.exp_ID, bouts_name);
-    filename = [filename 'LinePlot_IndvLines.fig'];
+    filename = [filename 'LinePlot_IndvLines_halfSecBL.fig'];
     filename = [P2.basedir '\' filename];
     saveas(fig, filename);
     close;
