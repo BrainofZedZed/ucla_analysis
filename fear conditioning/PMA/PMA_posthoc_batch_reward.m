@@ -22,10 +22,10 @@ dur_tone = 30; % (s) duration of tone
 dur_shock = 2; % (S) duration of shock
 
 P2.remove_baseline_tones = 0;  % if true, removes baseline tones from analysis
-P2.baseline_tones = 3;  % number of baseline tones not paired with shock
+P2.baseline_tones = 0;  % number of baseline tones not paired with shock
 
 P2.do_plot = true; % whether or not to plot some of the measurements. possible broken 20230526
-P2.do_implant_in_reward = false; % makes new ROI detection, looking for ROI 'reward' using part 'Implant'
+P2.do_implant_in_reward = true; % makes new ROI detection, looking for ROI 'reward' using part 'Implant'
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
 P2.script_dir = pwd; % directory with script files (avoids requiring changes to path)

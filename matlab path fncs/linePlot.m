@@ -5,7 +5,7 @@
 
 function [varargout]  = linePlot(zall, xlines, xlineNames)
 
-      % Subtract DC offset to get signals on top of one another
+    % Subtract DC offset to get signals on top of one another
     zall_offset = zall - mean(mean(zall));
     %zall_offset = zall_offset - mean(zall_offset(1:250));
     mean_zall = mean(zall_offset);
@@ -14,7 +14,7 @@ function [varargout]  = linePlot(zall, xlines, xlineNames)
     
     % plot mean and sem
     fig = figure;
-    y = mean(zall);
+    y = mean_zall;
     x = 1:numel(y);
     curve1 = y + sem_zall;
     curve2 = y - sem_zall;

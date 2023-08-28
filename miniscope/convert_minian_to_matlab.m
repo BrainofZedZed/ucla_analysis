@@ -5,7 +5,7 @@
 % The structure of Cdata is Cdata(amplitude_frame,cell_number), where amplitude_frame will be the amplitude of C in that frame for a given cell_number.
 clear;
 
-minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort6\2023_04_18\13_05_49\My_V4_Miniscope\minian\minian_dataset.nc";
+minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort6\2023_05_15\ZZ185_D28\2023_05_15\15_09_27\My_V4_Miniscope\minian\minian_dataset.nc";
 Adata  = ncread(minian_ds_path,'A');
 Cdata  = ncread(minian_ds_path,'C');
 Cdata = Cdata';
@@ -18,11 +18,11 @@ max_proj = ncread(minian_ds_path, 'max_proj');
 
 [minian_ds_dir, ~, ~] = fileparts(minian_ds_path);
 
-savename = strcat(minian_ds_dir, "\minian_data.mat");
+savename = strcat(minian_ds_dir, "\minian_data_cnmf.mat");
 save(savename, 'Adata', 'Cdata', 'Sdata', 'bdata', 'fdata', 'max_proj')
 dff = Cdata;
 spkfn = Sdata;
 
-savename = strcat(minian_ds_dir, "\minian_data_processed.mat");
+savename = strcat(minian_ds_dir, "\minian_data_processed_cnmf.mat");
 
 save(savename,"spkfn", "dff");

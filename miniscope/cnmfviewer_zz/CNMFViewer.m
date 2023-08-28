@@ -57,7 +57,7 @@ function CNMFViewer(A, C, S)
     updateDisplay();
 
     function mergeData()
-        selectedIdx = find([checkboxes.Value]);
+        selectedIdx = find(arrayfun(@(x) isvalid(x) && isa(x, 'matlab.ui.control.UIControl') && x.Value, checkboxes));
         selectedZ = closestZ(selectedIdx);
         mergeID = min(selectedZ);
         for z = setdiff(selectedZ, mergeID)
@@ -76,7 +76,7 @@ function CNMFViewer(A, C, S)
 
 
     function discardData()
-        selectedIdx = find([checkboxes.Value]);
+        selectedIdx = find(arrayfun(@(x) isvalid(x) && isa(x, 'matlab.ui.control.UIControl') && x.Value, checkboxes));
         selectedZ = closestZ(selectedIdx);
         for z = selectedZ
             checkboxes(find(closestZ == z)).Enable = 'off';
