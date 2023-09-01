@@ -28,7 +28,7 @@ P2.baseline_per = [-4 -5]; % baseline period relative to epoc onset for normaliz
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
-P2.peakWnd = [0 5]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
+P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
@@ -47,9 +47,9 @@ P2.do_peak = true;
 P2.do_auc = true;
 
 % PMA specific analyses
-P2.do_platform = true;
-P2.do_platform_tone_intersect = true;
-P2.do_platform_reward_tone_intersect = true;
+P2.do_platform = false;
+P2.do_platform_tone_intersect = false;
+P2.do_platform_reward_tone_intersect = false;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
 
 P2.save_analysis = true; % true if save details of analysis
@@ -502,17 +502,17 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function peaks = calcPeaks(P2, zall, peakWnd, ct)        
-    t0 = round(P2.trange_peri_bout(1)*P2.fp_fps);
+    t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
     if isempty(peakWnd)
         z = zall;
     else
-        wndStart = t0+(peakWnd(1)*P2.fp_fps);
-        wndEnd = t0+(peakWnd(2)*P2.fp_fps);
+        wndStart = t0+(peakWnd(1)*P2.beh_fps);
+        wndEnd = t0+(peakWnd(2)*P2.beh_fps);
         z = zall(:,wndStart:wndEnd);
     end
     [peak, latency] = max(mean(z));
     latency = mean(latency);
-    latency = latency/P2.fp_fps;
+    latency = latency/P2.beh_fps;
     peaks{ct,1} = P2.exp_ID;
     peaks{ct,2} = peak;
     peaks{ct,3} = latency;
@@ -521,27 +521,27 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
-    t0 = round(P2.trange_peri_bout(1)*P2.fp_fps);
+    t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
     meanz = mean(zall);
     auc_offset = mean(meanz(1:t0));
     meanz = meanz-auc_offset;
     auc_fc_abs{ct,1} = P2.exp_ID;
-    auc_fc_abs{ct,2} = trapz(abs(meanz(t0:t0+(round(10*P2.fp_fps)))));
+    auc_fc_abs{ct,2} = trapz(abs(meanz(t0:t0+(round(10*P2.beh_fps)))));
 
     try
-        auc_fc_abs{ct,3} = trapz(abs(meanz(t0+round(10*P2.fp_fps):t0+round(20*P2.fp_fps))));
+        auc_fc_abs{ct,3} = trapz(abs(meanz(t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps))));
     catch
         auc_fc_abs{ct,3} = '';
     end
 
     try
-        auc_fc_abs{ct,4} = trapz(abs(meanz(t0+round(20*P2.fp_fps):t0+round(30*P2.fp_fps))));
+        auc_fc_abs{ct,4} = trapz(abs(meanz(t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps))));
     catch
         auc_fc_abs{ct,4} = '';
     end
 
     try
-        auc_fc_abs{ct,5} = trapz(abs(meanz(t0:t0+round(30*P2.fp_fps))));
+        auc_fc_abs{ct,5} = trapz(abs(meanz(t0:t0+round(30*P2.beh_fps))));
     catch
         auc_fc_abs{ct,5} = '';
     end
@@ -549,11 +549,11 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
 
     % AUC calculated over indiviudual trials, abs
     auc_fc_ind_abs{ct,1} = P2.exp_ID;
-    auc_fc_ind_abs{ct,2} = trapz(abs(zall(:,t0:t0+(round(10*P2.fp_fps)))),2);
+    auc_fc_ind_abs{ct,2} = trapz(abs(zall(:,t0:t0+(round(10*P2.beh_fps)))),2);
     auc_fc_ind_abs{ct,2} = mean(auc_fc_ind_abs{ct,2});
 
     try
-        auc_fc_ind_abs{ct,3} = trapz(abs(zall(:,t0+round(10*P2.fp_fps):t0+round(20*P2.fp_fps))),2);
+        auc_fc_ind_abs{ct,3} = trapz(abs(zall(:,t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps))),2);
         auc_fc_ind_abs{ct,3} = mean(auc_fc_ind_abs{ct,3});
 
     catch
@@ -561,7 +561,7 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
-        auc_fc_ind_abs{ct,4} = trapz(abs(zall(:,t0+round(20*P2.fp_fps):t0+round(30*P2.fp_fps))),2);
+        auc_fc_ind_abs{ct,4} = trapz(abs(zall(:,t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps))),2);
         auc_fc_ind_abs{ct,4} = mean(auc_fc_ind_abs{ct,4});
 
     catch
@@ -569,7 +569,7 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
-        auc_fc_ind_abs{ct,5} = trapz(abs(zall(:,t0:t0+round(30*P2.fp_fps))),2);
+        auc_fc_ind_abs{ct,5} = trapz(abs(zall(:,t0:t0+round(30*P2.beh_fps))),2);
         auc_fc_ind_abs{ct,5} = mean(auc_fc_ind_abs{ct,5});
     catch
         auc_fc_ind_abs{ct,5} = '';
@@ -577,11 +577,11 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
 
    % AUC calculated over indiviudual trials, not abs
     auc_fc_ind{ct,1} = P2.exp_ID;
-    auc_fc_ind{ct,2} = trapz(zall(:,t0:t0+(round(10*P2.fp_fps))),2);
+    auc_fc_ind{ct,2} = trapz(zall(:,t0:t0+(round(10*P2.beh_fps))),2);
     auc_fc_ind{ct,2} = mean(auc_fc_ind{ct,2});
 
     try
-        auc_fc_ind{ct,3} = trapz(zall(:,t0+round(10*P2.fp_fps):t0+round(20*P2.fp_fps)),2);
+        auc_fc_ind{ct,3} = trapz(zall(:,t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps)),2);
         auc_fc_ind{ct,3} = mean(auc_fc_ind{ct,3});
 
     catch
@@ -589,7 +589,7 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
-        auc_fc_ind{ct,4} = trapz(zall(:,t0+round(20*P2.fp_fps):t0+round(30*P2.fp_fps)),2);
+        auc_fc_ind{ct,4} = trapz(zall(:,t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps)),2);
         auc_fc_ind{ct,4} = mean(auc_fc_ind{ct,4});
 
     catch
@@ -597,7 +597,7 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
-        auc_fc_ind{ct,5} = trapz(zall(:,t0:t0+round(30*P2.fp_fps)),2);
+        auc_fc_ind{ct,5} = trapz(zall(:,t0:t0+round(30*P2.beh_fps)),2);
         auc_fc_ind{ct,5} = mean(auc_fc_ind{ct,5});
     catch
         auc_fc_ind{ct,5} = '';
