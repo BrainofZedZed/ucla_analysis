@@ -5,7 +5,7 @@
 % The structure of Cdata is Cdata(amplitude_frame,cell_number), where amplitude_frame will be the amplitude of C in that frame for a given cell_number.
 clear;
 
-minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort6\2023_05_15\ZZ185_D28\2023_05_15\15_09_27\My_V4_Miniscope\minian\minian_dataset.nc";
+minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort6\2023_04_18\13_05_49\My_V4_Miniscope\minian\minian_dataset.nc";
 Adata  = ncread(minian_ds_path,'A');
 Cdata  = ncread(minian_ds_path,'C');
 Cdata = Cdata';
@@ -26,3 +26,20 @@ spkfn = Sdata;
 savename = strcat(minian_ds_dir, "\minian_data_processed_cnmf.mat");
 
 save(savename,"spkfn", "dff");
+
+%% 
+% format for CScreener
+ms.FiltTraces = Cdata';
+ms.RawTraces = Cdata';
+ms.S = Sdata';
+ms.numNeurons = size(Cdata,1);
+ms.cell_label = ones([ms.numNeurons,1]);
+
+for i = 1:size(Adata,3)
+    Atmp = flipud(Adata(:,:,i));
+    Atmp = Atmp';
+    Atmp = fliplr(Atmp);
+    ms.SFPs(:,:,i) = Atmp;
+end
+savename = strcat(minian_ds_dir, "\ms.mat");
+save(savename,"ms", '-v7.3');

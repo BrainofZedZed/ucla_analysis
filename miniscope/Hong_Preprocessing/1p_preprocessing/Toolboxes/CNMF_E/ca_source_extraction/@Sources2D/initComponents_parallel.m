@@ -41,7 +41,7 @@ try
     obj.frame_range = frame_range;
     
     % folders and files for saving the results
-    tmp_dir = sprintf('%s%sframes_%d_%d%s', fileparts(mat_file),filesep, frame_range(1), frame_range(2), filesep);
+    tmp_dir = sprintf('%s%sframes_%d_%d%s', fileparts(mat_file),filesep, round(frame_range(1)), round(frame_range(2)), filesep);
     if ~exist(tmp_dir, 'dir')
         mkdir(tmp_dir);
     end

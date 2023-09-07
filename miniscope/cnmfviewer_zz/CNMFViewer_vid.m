@@ -1,5 +1,5 @@
-function CNMFViewer(A, C, S)
-% homebrew version of CNMFViewer from Minian
+function CNMFViewer_vid(A, C, S, videoPath)
+% homebrew version of CNMFViewer from Minian with Video Integration
 % 2023 08 01 ZZ
     [Nx, Mx, Z] = size(A);
     [Zx, ~] = size(C);
@@ -10,6 +10,10 @@ function CNMFViewer(A, C, S)
     alreadyDisplayed = false(Z, 1);
     currentZDisplay = [];
 
+    % Video Integration
+    videoObj = VideoReader(videoPath);
+    numFrames = floor(videoObj.Duration * videoObj.FrameRate);
+    currentFrame = 1;
 
     if Z ~= Zx
         error('Z dimension must match for A and C.');
@@ -32,7 +36,7 @@ function CNMFViewer(A, C, S)
 
     distances = pdist2(centers, centers);
 
-    fig = figure('Name', 'CNMFViewer', 'Position', [100, 100, 1200, 800]);
+    fig = figure('Name', 'Interactive Data Visualizer', 'Position', [100, 100, 1200, 800]);
 
     axC = gobjects(numItemsToDisplay, 1);
     for i = 1:numItemsToDisplay
@@ -40,7 +44,9 @@ function CNMFViewer(A, C, S)
     end
 
     axA = axes(fig, 'Position', [0.1, 0.5, 0.3, 0.4]);
-    axBatchA = axes(fig, 'Position', [0.1, 0.05, 0.3, 0.4]);
+
+    % Video Axes
+    axVideo = axes(fig, 'Position', [0.1, 0.05, 0.3, 0.4]);
 
     % Page label
     labelPage = uicontrol('Style', 'text', 'Position', [700, 10, 200, 30], 'String', ['Page: ', num2str(currentPage), '/', num2str(totalPages)]);
@@ -51,6 +57,11 @@ function CNMFViewer(A, C, S)
     buttonNext = uicontrol('Style', 'pushbutton', 'String', 'Next', 'Position', [400, 10, 100, 30], 'Callback', @(src, event) nextPage());
     buttonBack = uicontrol('Style', 'pushbutton', 'String', 'Back', 'Position', [500, 10, 100, 30], 'Callback', @(src, event) previousPage());
     buttonDone = uicontrol('Style', 'pushbutton', 'String', 'Done', 'Position', [600, 10, 100, 30], 'Callback', @(src, event) done());
+
+    % Slider for video frame navigation
+    sliderFrame = uicontrol('Style', 'slider', 'Min', 1, 'Max', numFrames, ...
+        'Value', 1, 'Position', [50, 10, 300, 20], ...
+        'Callback', @(src, event) updateVideo());
 
     checkboxes = gobjects(numItemsToDisplay, 1);
 
@@ -65,27 +76,23 @@ function CNMFViewer(A, C, S)
             S(mergeID, :) = S(mergeID, :) + S(z, :);
             A(:,:,mergeID) = A(:,:,mergeID) + A(:,:,z);
             checkboxes(find(closestZ == z)).Enable = 'off';
-            displayIDs(z) = mergeID; % Display the same ID for the merged item
-            validZ(z) = false; % Mark the merged component as invalid
+            displayIDs(z) = mergeID;
+            validZ(z) = false;
         end
-        displayIDs(mergeID) = mergeID; % Not necessary, but added for clarity
+        displayIDs(mergeID) = mergeID;
         updateDisplay();
     end
-
-
-
 
     function discardData()
         selectedIdx = find(arrayfun(@(x) isvalid(x) && isa(x, 'matlab.ui.control.UIControl') && x.Value, checkboxes));
         selectedZ = closestZ(selectedIdx);
         for z = selectedZ
             checkboxes(find(closestZ == z)).Enable = 'off';
-            displayIDs(z) = -1; % Display ID as -1 for discarded items
-            validZ(z) = false; % Mark the discarded component as invalid
+            displayIDs(z) = -1;
+            validZ(z) = false;
         end
         updateDisplay();
     end
-
 
     function normalizeC()
         minC = min(C, [], 2);
@@ -102,80 +109,57 @@ function CNMFViewer(A, C, S)
 
     function previousPage()
         currentZDisplay = [];
-        currentPage = max(1, currentPage - 1);
+        currentPage = currentPage - 1;
         updateDisplay();
     end
 
-   function done()
-        finalC = C(validZ, :);
-        finalS = S(validZ, :);
-        finalA = A(:,:,validZ);
-        save('cleaned_cnmf_data.mat', 'finalC', 'finalS', 'finalA');
+    function done()
         close(fig);
     end
 
     function updateDisplay()
         delete(checkboxes);
-        checkboxes = gobjects(numItemsToDisplay, 1);
-        
-        idxZ = (currentPage - 1) * numItemsToDisplay + 1 : currentPage * numItemsToDisplay;
-        idxZ = idxZ(idxZ <= Z); % Ensure we don't exceed the bounds
-        
-        % Check if currentZDisplay is empty
-        if isempty(currentZDisplay)
-            % Adjust distances based on the actual items in idxZ
-            sortedDistances = sort(distances(idxZ, :), 2, 'ascend');
-        
-            % Use validZ to exclude discarded or merged items
-            closestIdx = ismember(distances(idxZ, :), sortedDistances(:, 2:numItemsToDisplay+1)) & ~alreadyDisplayed' & validZ';
-        
-            closestZ = find(any(closestIdx, 1));
-            
-            % Populate currentZDisplay
-            currentZDisplay = closestZ;
-        else
-            closestZ = currentZDisplay;
+        for i = 1:numItemsToDisplay
+            closestZ(i) = displayIDs((currentPage-1)*numItemsToDisplay + i);
+            checkboxes(i) = uicontrol('Style', 'checkbox', 'Position', [500, 700 - 100*i, 20, 20]);
         end
 
-        numActualDisplay = min(length(idxZ), numel(closestZ)); % Determine how many items we can actually display
-        
-        for i = 1:numActualDisplay
-            zIdx = closestZ(i);
-            if zIdx <= Z 
-                plot(axC(i), C(zIdx, :), 'k');
-                title(axC(i), ['C Signal for N = ', num2str(displayIDs(zIdx))]);
-                checkboxes(i) = uicontrol('Style', 'checkbox', 'Position', [750, 770 - 130 * i, 15, 15]);
-                
-                if ~validZ(zIdx)
-                    checkboxes(i).Value = 1;  % Checkbox is checked
-                    checkboxes(i).Enable = 'off';  % Checkbox is disabled
-                end
-        
-                alreadyDisplayed(zIdx) = true;
+        for i = 1:length(axC)
+            if closestZ(i) > 0 && validZ(closestZ(i))
+                plot(axC(i), C(closestZ(i), :));
+                hold(axC(i), 'on');
+                plot(axC(i), S(closestZ(i), :));
+                hold(axC(i), 'off');
+                title(axC(i), ['Component: ', num2str(closestZ(i))]);
+            else
+                cla(axC(i));
+                title(axC(i), '');
             end
         end
 
-        imagesc(axA, sum(A(:,:,closestZ(1:numActualDisplay)), 3)); % Make sure not to exceed bounds here too
-        colormap(axA, 'parula');
-        title(axA, 'Displayed footprints');
-        
-        for i = 1:numActualDisplay
-            zIdx = closestZ(i);
-            if zIdx <= Z % Ensure we don't exceed the bounds
-                [row, col] = find(A(:,:,zIdx) > 0);
-                if ~isempty(row) && ~isempty(col)
-                    text(axA, mean(col), mean(row), num2str(displayIDs(zIdx)), 'Color', 'w'); % Use displayIDs instead of zIdx
-                end
-            end
-        end
+        imagesc(axA, sum(A, 3));
+        colormap(axA, 'gray');
+        axis(axA, 'off');
 
-        
-        imagesc(axBatchA, sum(A, 3));
-        colormap(axBatchA, 'parula');
-        title(axBatchA, 'All footprints');
-        
-        % Update page label
         labelPage.String = ['Page: ', num2str(currentPage), '/', num2str(totalPages)];
+
+        updateVideo();
     end
 
+    function updateVideo()
+        currentFrame = round(sliderFrame.Value);
+        videoObj.CurrentTime = (currentFrame - 1) / videoObj.FrameRate;
+        vidFrame = readFrame(videoObj);
+        imagesc(axVideo, vidFrame);
+
+        % Update the vertical line in signals
+        for i = 1:length(axC)
+            if isvalid(axC(i))
+                yL = ylim(axC(i));
+                hold(axC(i), 'on');
+                plot(axC(i), [currentFrame, currentFrame], yL, 'r');
+                hold(axC(i), 'off');
+            end
+        end
+    end
 end
