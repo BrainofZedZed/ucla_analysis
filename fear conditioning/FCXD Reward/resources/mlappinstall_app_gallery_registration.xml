@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<toolset id="user_apps_toolset" template="false">
-   <tool app_file_path="./" handler_class="com.mathworks.appmanagement.desktop.ToolboxToolSetExtensionHandler" id="da8bd52d-072f-4c0c-844a-d9845f6e6d8c" label="FCXD Reward" toolset_id="user_apps_toolset">
-      <callback>matlab.apputil.run('FCXDRewardAPP')</callback>
-      <description>minor bug fix to correct reward light</description>
-      <parent_tool id="my_apps" toolset_id="apps_toolset"/>
-   </tool>
-</toolset>

@@ -2,8 +2,8 @@
 
 
 %plot ROIs with cell IDs on top
-roi1 = zz106d1roi;
-roi2 = zz106d28roi;
+roi1 = d1;
+roi2 = d28;
 
 roi1_orig = roi1;
 roi2_orig = roi2;
@@ -14,8 +14,8 @@ roi1 = squeeze(roi1);
 roi1(roi1~=0) = 1;
 
 % calculate centers of objects
-for i = 1:size(roi1_orig)
-    tmp = squeeze(roi1_orig(i,:,:));
+for i = 1:size(roi1_orig,3)
+    tmp = squeeze(roi1_orig(:,:,i));
     [x y] = find(tmp);
     meanx = round(mean(x));
     meany = round(mean(y));
@@ -34,8 +34,8 @@ roi2 = squeeze(roi2);
 roi2(roi2~=0) = 1;
 
 % calculate centers of objects
-for i = 1:size(roi2_orig)
-    tmp = squeeze(roi2_orig(i,:,:));
+for i = 1:size(roi2_orig,3)
+    tmp = squeeze(roi2_orig(:,:,i));
     [x y] = find(tmp);
     meanx = round(mean(x));
     meany = round(mean(y));

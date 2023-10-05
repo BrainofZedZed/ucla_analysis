@@ -163,8 +163,10 @@ for filenum = 1:length(P1.video_folder_list)
         t1 = t0+dur;
         zb = mean(bhsig(bl(1):bl(2))); % baseline period mean
         zsd = std(bhsig(bl(1):bl(2))); % baseline period stdev
-        zfreeze_offset(i,:)=(bhsig(t0:t1-1) - zb)/zsd; % Z score per bin
-        zfreeze_offset(i,:) = smooth(zfreeze_offset(i,:),25); % smooth
+        if t1-1 < length(bhsig)
+            zfreeze_offset(i,:)=(bhsig(t0:t1-1) - zb)/zsd; % Z score per bin
+            zfreeze_offset(i,:) = smooth(zfreeze_offset(i,:),25); % smooth
+        end
     end
     
     for i = 1:size(zfreeze_offset,1)

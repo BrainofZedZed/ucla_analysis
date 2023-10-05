@@ -22,14 +22,14 @@ clear;
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
-P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize
-P2.baseline_per = [-4 -5]; % baseline period relative to epoc onset for normalizing
-
+P2.trange_peri_bout = [2 10]; % [sec_before, sec_after] event to visualize
+P2.baseline_per = [-1 -2]; % baseline period relative to plotted data [sec_start, sec_end] (including trange_peri_bout) 
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
-P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
+P2.peakWnd = [0 15]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
+P2.pc_name = 'PC0_';
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis
@@ -60,7 +60,7 @@ P2.skip_prev_analysis = false; % true if not redo previous analysis
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
 % event (eg 'tone', 'CSp')
 % NB: these must be the exact names and spelling of
-P2.cue = {'PC0_', 'CSp'};
+P2.cue = {P2.pc_name, bouts_name};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -169,7 +169,7 @@ for j = 1:length(P2.video_folder_list)
 
     %% calculate peaks of epoc signal
     if P2.do_peak
-        peaks = calcPeaks(P2, zall, P2.peakWnd, ct);
+        [peaks, peaks_ind_trials] = calcPeaks(P2, zall, P2.peakWnd, ct);
     end
     %% calculate AUC of epoc signals
     if P2.do_auc
@@ -274,12 +274,15 @@ for j = 1:length(P2.video_folder_list)
         if ~exist('zall_pf_during_tone','var')
             zall_pf_during_tone = [];
         end
+        if ~exist('peaks_ind_trials','var')
+            peaks_ind_trials = [];
+        end
 
         P2.event_on = pre_dur;
         P2.event_off = epoc_length;
         savename = [basedir '\' P2.exp_ID '_' bouts_name '_fibpho_analysis.mat'];
         if P2.save_analysis
-          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'peaks', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit');
+          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'peaks', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit', 'peaks_ind_trials');
         end
 end
 
@@ -501,7 +504,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function peaks = calcPeaks(P2, zall, peakWnd, ct)        
+function [peaks, peaks_ind_trials] = calcPeaks(P2, zall, peakWnd, ct)        
     t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
     if isempty(peakWnd)
         z = zall;
@@ -511,11 +514,13 @@ function peaks = calcPeaks(P2, zall, peakWnd, ct)
         z = zall(:,wndStart:wndEnd);
     end
     [peak, latency] = max(mean(z));
+    [pk_all, lat_all] = max(z,[],2);
     latency = mean(latency);
     latency = latency/P2.beh_fps;
     peaks{ct,1} = P2.exp_ID;
     peaks{ct,2} = peak;
     peaks{ct,3} = latency;
+    peaks_ind_trials = [pk_all, lat_all];
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -637,16 +642,13 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     % baseline to be zeroed
     zall_offset = zall - mean(mean(zall));
     for i = 1:size(zall,1)
-        zall_offset(i,:) = zall_offset(i,:) - mean(zall_offset(1:50));
-        zall_offset(i,:) = smooth(zall_offset(i,:),25);
+        %zall_offset(i,:) = smooth(zall_offset(i,:),25);
     end
-    mean_zall = mean(zall_offset);
-    std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
     sem_zall = std(zall_offset)/sqrt(size(zall_offset,1));
 
     % plot mean and sem
     fig = figure;
-    y = mean(zall);
+    y = mean(zall_offset);
     x = 1:numel(y);
     curve1 = y + sem_zall;
     curve2 = y - sem_zall;
