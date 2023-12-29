@@ -27,7 +27,6 @@ P2.baseline_tones = 0;  % number of baseline tones not paired with shock
 P2.do_plot = false; % whether or not to plot some of the measurements. possible broken 20230526
 P2.do_implant_in_reward = true; % makes new ROI detection, looking for ROI 'reward' using part 'Implant'
 P2.make_reward_roi_small = true; % true if want to reduce size of reward ROI by half vertically
-P2.do_head_pf_entry_count = false; % counts head as pf entry/exit instead of midback
 P2.exclude_freeze_in_reward = true; % excludes freeze counts when head is in reward ROI
 
 %% Batch Setup
@@ -120,28 +119,14 @@ if P2.do_implant_in_reward
     save('Behavior.mat', 'Behavior');
 end
 
-
-%% track head as entry/exit on pf 
-if P2.do_head_pf_entry_count
-    load('Tracking.mat');
-    loc = Tracking.Smooth.Head;
-    pf_roi_num = 0;
-    load('Params.mat');
-    for i = 1:numel(Params.roi_name)
-        if isequal(Params.roi_name{1,i}, 'platform')
-            pf_roi_num = i;
-        end
-    end
-    
-    platform_roi = Params.roi{1,pf_roi_num};
-    pf_head_in = inpolygon(loc(1,:), loc(2,:), platform_roi(:,1), platform_roi(:,2));  % find frames when location is within ROI boundaries
-    Behavior.Spatial.platform_head_vec = pf_head_in;
-    Behavior.Spatial.platform_head_bouts = findStartStop(pf_head_in);
-    save('Behavior.mat', 'Behavior');
-end
-
 %% Part 1: percent of tone spent freezing
 tone_frz = cell2mat(Behavior.Intersect.TemBeh.CSp.Freezing.PerBehDuringCue);
+
+for i = 1:size(Behavior.Temporal.CSp.Bouts,1)
+    i_frz = frz_vec(Behavior.Temporal.CSp.Bouts(i,1):Behavior.Temporal.CSp.Bouts(i,2));
+    tone_frz(i) = sum(i_frz)/length(i_frz);
+end
+Behavior.Intersect.TemBeh.CSp.Freezing.PerBehDuringCue = tone_frz;
 
 if P2.remove_baseline_tones
     tone_frz = tone_frz(P2.baseline_tones+1:end);
@@ -150,7 +135,7 @@ end
 tone_frz = tone_frz*100;
 tone_frz_avg = mean(tone_frz);
 
-%% Part 2: percent of tone spent freezing on platform
+%% Part 2: percent opf
 
 tone_pf_frz = zeros(size(tone_frz));
 for i = 1:length(tone_bouts)
@@ -268,7 +253,6 @@ end
 pf_tone_vec = zeros(size(tone_vec));
 pf_tone_vec(pf_vec & tone_vec) = 1;
 pf_tone_bouts = findStartStop(pf_tone_vec);
-
 
 %% Part 5: batch output
 out.per_tone_frz(filenum,:) = [{id}, num2cell(tone_frz)];

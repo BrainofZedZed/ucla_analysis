@@ -1,5 +1,5 @@
 cs = bouts_name;
-id = ['ZZ168 D1' cs];
+id = ['ZZ189 D28' cs];
 
 P2.fp_fps*P2.trange_peri_bout(1);
 t0 = P2.fp_fps*P2.trange_peri_bout(1);
@@ -9,10 +9,9 @@ t1 = length(zall)-t1;
 laser_off = [1:2:length(bouts)];
 laser_on = [2:2:length(bouts)];
 zsig_laseroff = zall(1:2:end,:);
+zsig_laseroff = zsig_laseroff - mean(zsig_laseroff(:,1:t0),2);
 zsig_laseron = zall(2:2:end,:);
 zsig_laseron = zsig_laseron - mean(zsig_laseron(:,1:t0),2);
-zsig_laseroff = zsig_laseroff - mean(zsig_laseroff(:,1:t0),2);
-
 
 avg_off = mean(zsig_laseroff,1);
 avg_on = mean(zsig_laseron,1);
@@ -37,14 +36,14 @@ title(id);
 savefig(['avg_', cs, '_response_laser.fig']);
 
 %% peaks
+
+peaks_trial = max(zall(:,t0:t0+2*P2.fp_fps)');
 peaks_laser_on = max(zsig_laseron(:,t0:t0+2*P2.fp_fps)');
 peaks_laser_off = max(zsig_laseroff(:,t0:t0+2*P2.fp_fps)');
 
-ntrials = length(peaks_laser_on);
-
 figure;
-scatter(ones([1,ntrials]),peaks_laser_off,'black', 'filled'); hold on;
-scatter((ones([1,ntrials])*2),peaks_laser_on,'red','filled');
+scatter([1,1,1,1],peaks_laser_on,'black', 'filled'); hold on;
+scatter([2,2,2,2],peaks_laser_off,'red','filled');
 xlim([0 3]);
 xticks([1,2]);
 xticklabels({'Laser Off', 'Laser On'});
@@ -58,5 +57,3 @@ laser_on_auc = trapz(avg_on(t0:t1));
 
 %% save
 save([cs '_laser_posthoc_analysis.mat']);
-
-clear;

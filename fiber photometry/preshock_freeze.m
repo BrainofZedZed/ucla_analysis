@@ -1,8 +1,3 @@
-% GOAL: script to load in Behavior data, Fibpho analysis file, and
-% experiemtn file, to extract photometry signal during different parts of
-% freezing
-
-clear;
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
 P1.script_dir = pwd; % directory with script files (avoids requiring changes to path)
@@ -52,9 +47,16 @@ for filenum = 1:length(P1.video_folder_list)
     fibphof = dir('*fibpho_analysis.mat');
     load(fibphof.name, 'bhsig', 'P2');
 
-    % LOAD bhsig, P2 from fibpho file
+    %get first shock time
+    shock1 = Behavior.Temporal.US.Bouts(1,1);
     
-    % LOAD Behavior from BD output
+    % get freezing bouts prior to first shock
+    tmp = find(Behavior.Freezing.Bouts(:,1) < shock1);
+    tmp = max(tmp);
+    
+    % reduce freezing bouts to just ones before shock
+    Behavior.Freezing.Bouts = Behavior.Freezing.Bouts(tmp:end,:);
+    Behavior.Freezing.Length = Behavior.Freezing.Length(tmp:end,1);
     
     %% DO FREEZE START
     % zscore data, centered around start of freezing
@@ -111,7 +113,7 @@ for filenum = 1:length(P1.video_folder_list)
     id = strrep(P2.exp_ID,'_',' ');
     num_bouts = size(zfreeze_onset,1);
     title([id ' GRABDA freezing signal, 1s freeze min, n=' num2str(num_bouts)]);
-    savefig([P2.exp_ID '_1s_freeze_onset.fig']);
+    savefig([P2.exp_ID '_1s_freeze_onset_postshock.fig']);
     close; 
 
     zf1_onset_out = [zf1_onset_out; zfreeze_onset];
@@ -128,7 +130,7 @@ for filenum = 1:length(P1.video_folder_list)
     ylabel('signal (z score)')
     id = strrep(P2.exp_ID,'_',' ');
     title([id ' GRABDA freezing signal, 2s freeze min, n=' num2str(size(zf2,1))]);
-    savefig([P2.exp_ID '_2s_freeze_onset.fig']);
+    savefig([P2.exp_ID '_2s_freeze_onset_postshock.fig']);
     close; 
 
     zf2_onset_out = [zf2_onset_out; zf2];
@@ -145,7 +147,7 @@ for filenum = 1:length(P1.video_folder_list)
     ylabel('signal (z score)')
     id = strrep(P2.exp_ID,'_',' ');
     title([id ' GRABDA freezing signal, 3s freeze min, n=' num2str(size(zf3,1))]);
-    savefig([P2.exp_ID '_3s_freeze_onset.fig']);
+    savefig([P2.exp_ID '_3s_freeze_onset_postshock.fig']);
     close; 
 
     zf3_onset_out = [zf3_onset_out; zf3];
@@ -165,8 +167,10 @@ for filenum = 1:length(P1.video_folder_list)
         t1 = t0+dur;
         zb = mean(bhsig(bl(1):bl(2))); % baseline period mean
         zsd = std(bhsig(bl(1):bl(2))); % baseline period stdev
-        zfreeze_offset(i,:)=(bhsig(t0:t1-1) - zb)/zsd; % Z score per bin
-        zfreeze_offset(i,:) = smooth(zfreeze_offset(i,:),25); % smooth
+        if t1-1 < length(bhsig)
+            zfreeze_offset(i,:)=(bhsig(t0:t1-1) - zb)/zsd; % Z score per bin
+            zfreeze_offset(i,:) = smooth(zfreeze_offset(i,:),25); % smooth
+        end
     end
     
     for i = 1:size(zfreeze_offset,1)
@@ -180,7 +184,7 @@ for filenum = 1:length(P1.video_folder_list)
     id = strrep(P2.exp_ID,'_',' ');
     num_bouts = size(zfreeze_offset,1);
     title([id ' GRABDA freezing signal, 1s freeze min, n=' num2str(num_bouts)]);
-    savefig([P2.exp_ID '_1s_freeze_offset.fig']);
+    savefig([P2.exp_ID '_1s_freeze_offset_postshock.fig']);
     close; 
 
     zf1_offset_out = [zf1_offset_out; zfreeze_offset];
@@ -197,7 +201,7 @@ for filenum = 1:length(P1.video_folder_list)
     ylabel('signal (z score)')
     id = strrep(P2.exp_ID,'_',' ');
     title([id ' GRABDA freezing signal, 2s freeze min, n=' num2str(size(zf2,1))]);
-    savefig([P2.exp_ID '_2s_freeze_offset.fig']);
+    savefig([P2.exp_ID '_2s_freeze_offset_postshock.fig']);
     close; 
 
     zf2_offset_out = [zf2_offset_out; zf2];
@@ -214,7 +218,7 @@ for filenum = 1:length(P1.video_folder_list)
     ylabel('signal (z score)')
     id = strrep(P2.exp_ID,'_',' ');
     title([id ' GRABDA freezing signal, 3s freeze min, n=' num2str(size(zf3,1))]);
-    savefig([P2.exp_ID '_3s_freeze_offset.fig']);
+    savefig([P2.exp_ID '_3s_freeze_offset_posthock.fig']);
     close; 
 
     zf3_offset_out = [zf3_offset_out; zf3];
@@ -233,12 +237,15 @@ for filenum = 1:length(P1.video_folder_list)
     frz.pre_frames = pre_frames;
     frz.post_frames = post_frames;
 
-    save(fibphof.name, 'frz', '-append');
+    frz_postshock = frz;
+
+    save('DP098_D0_2023-11-27_13-35-07.mat', 'frz_postshock', '-append');
 end
 
 cd(string(P1.video_directory));
-save('batch_freeze_signal.mat','zf1_onset_out', 'zf2_onset_out', 'zf3_onset_out', ...
+save('batch_freeze_signal_preshock.mat','zf1_onset_out', 'zf2_onset_out', 'zf3_onset_out', ...
  'zf1_onset_labels', 'zf2_onset_labels', 'zf3_onset_labels', 'zf1_offset_out', ...
  'zf2_offset_out', 'zf3_offset_out', 'zf1_offset_labels', 'zf2_offset_labels', ...
  'zf3_offset_labels');
+
 

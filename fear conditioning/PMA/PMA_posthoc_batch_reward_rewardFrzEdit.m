@@ -21,13 +21,12 @@ fps = 49.97; % fps of behavior recording
 dur_tone = 30; % (s) duration of tone
 dur_shock = 2; % (S) duration of shock
 
-P2.remove_baseline_tones = 0;  % if true, removes baseline tones from analysis
+P2.remove_baseline_tones = 1;  % if true, removes baseline tones from analysis
 P2.baseline_tones = 0;  % number of baseline tones not paired with shock
 
 P2.do_plot = false; % whether or not to plot some of the measurements. possible broken 20230526
 P2.do_implant_in_reward = true; % makes new ROI detection, looking for ROI 'reward' using part 'Implant'
 P2.make_reward_roi_small = true; % true if want to reduce size of reward ROI by half vertically
-P2.do_head_pf_entry_count = false; % counts head as pf entry/exit instead of midback
 P2.exclude_freeze_in_reward = true; % excludes freeze counts when head is in reward ROI
 
 %% Batch Setup
@@ -72,7 +71,9 @@ frz_vec = Behavior.Freezing.Vector;
 pf_vec = Behavior.Spatial.platform.inROIvector;
 
 if P2.remove_baseline_tones
-    tone_bouts = tone_bouts(P2.baseline_tones+1:end,:);
+   if size(tone_bouts,1)>9
+       tone_bouts = tone_bouts(end-8:end,:);
+   end
 end
 
 %% track implant in reward
@@ -120,44 +121,31 @@ if P2.do_implant_in_reward
     save('Behavior.mat', 'Behavior');
 end
 
-
-%% track head as entry/exit on pf 
-if P2.do_head_pf_entry_count
-    load('Tracking.mat');
-    loc = Tracking.Smooth.Head;
-    pf_roi_num = 0;
-    load('Params.mat');
-    for i = 1:numel(Params.roi_name)
-        if isequal(Params.roi_name{1,i}, 'platform')
-            pf_roi_num = i;
-        end
-    end
-    
-    platform_roi = Params.roi{1,pf_roi_num};
-    pf_head_in = inpolygon(loc(1,:), loc(2,:), platform_roi(:,1), platform_roi(:,2));  % find frames when location is within ROI boundaries
-    Behavior.Spatial.platform_head_vec = pf_head_in;
-    Behavior.Spatial.platform_head_bouts = findStartStop(pf_head_in);
-    save('Behavior.mat', 'Behavior');
-end
-
 %% Part 1: percent of tone spent freezing
 tone_frz = cell2mat(Behavior.Intersect.TemBeh.CSp.Freezing.PerBehDuringCue);
-
 if P2.remove_baseline_tones
-    tone_frz = tone_frz(P2.baseline_tones+1:end);
+   if length(tone_frz)>9
+       tone_frz = tone_frz(end-8:end);
+   end
 end
+
+for i = 1:size(tone_bouts,1)
+    i_frz = frz_vec(tone_bouts(i,1):tone_bouts(i,2));
+    tone_frz(i) = sum(i_frz)/length(i_frz);
+end
+Behavior.Intersect.TemBeh.CSp.Freezing.PerBehDuringCue = tone_frz;
 
 tone_frz = tone_frz*100;
 tone_frz_avg = mean(tone_frz);
 
-%% Part 2: percent of tone spent freezing on platform
+%% Part 2: percent of freezing on platform (vs off)
 
 tone_pf_frz = zeros(size(tone_frz));
 for i = 1:length(tone_bouts)
     i_pf = pf_vec(tone_bouts(i,1):tone_bouts(i,2));
     i_frz = frz_vec(tone_bouts(i,1):tone_bouts(i,2));
     i_pf_frz = find(i_pf & i_frz);
-    tone_pf_frz(i) = length(i_pf_frz)/length(i_pf)*100;
+    tone_pf_frz(i) = length(i_pf_frz)/sum(i_frz)*100;
 end
 
 tone_pf_frz_avg = mean(tone_pf_frz);
@@ -177,7 +165,7 @@ tone_off_pf_frz_avg = mean(tone_off_pf_frz);
 
 %% Part 3:  percent time on platform, per tone
 on_pf = Behavior.Spatial.platform.inROIvector;
-tone_on = Behavior.Temporal.CSp.Bouts;
+tone_on = tone_bouts;
 
 % length of tone
 tone_dur = tone_on(1,2) - tone_on(1,1);
@@ -269,7 +257,6 @@ pf_tone_vec = zeros(size(tone_vec));
 pf_tone_vec(pf_vec & tone_vec) = 1;
 pf_tone_bouts = findStartStop(pf_tone_vec);
 
-
 %% Part 5: batch output
 out.per_tone_frz(filenum,:) = [{id}, num2cell(tone_frz)];
 out.per_tone_platform_frz(filenum,:) = [{id}, num2cell(tone_pf_frz)];
@@ -281,7 +268,6 @@ out.per_iti_platform(filenum,:) = [{id}, num2cell(iti_pf_proportion)];
 out.per_reward_zone(filenum,:) = [{id}, num2cell(reward_time)];
 out.normal_pf_bouts(filenum,:) = [{id}, {Behavior.Spatial.platform.Bouts}];
 out.reward_bouts(filenum,:) = [{id}, {Behavior.Spatial.reward.Bouts}];
-out.head_pf_bouts(filenum,:) = [{id}, {Behavior.Spatial.platform_head_bouts}];
 out.platform_tone_bouts(filenum,:) = [{id}, {pf_tone_bouts}];
 out.avg.tone_frz(filenum,:) = [{id}, num2cell(tone_frz_avg)];
 out.avg.tone_pf_frz(filenum,:) = [{id}, num2cell(tone_pf_frz_avg)];

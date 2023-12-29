@@ -22,6 +22,16 @@ clear;
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
+<<<<<<< HEAD
+P2.trange_peri_bout = [2 10]; % [sec_before, sec_after] event to visualize
+P2.baseline_per = [-1 -2]; % baseline period relative to plotted data [sec_start, sec_end] (including trange_peri_bout) 
+P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
+P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
+P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
+P2.peakWnd = [0 15]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
+
+P2.pc_name = 'PC0_';
+=======
 P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize
 P2.baseline_per = [-4 -5]; % baseline period relative to epoc onset for normalizing
 
@@ -30,9 +40,6 @@ P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
-<<<<<<< HEAD
-P2.pc_name = 'PC2_';
-=======
 >>>>>>> parent of 30a9892 (tons of updates)
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
@@ -51,9 +58,15 @@ P2.do_peak = true;
 P2.do_auc = true;
 
 % PMA specific analyses
-P2.do_platform = 0;
-P2.do_platform_tone_intersect = 0;
-P2.do_platform_reward_tone_intersect = 0;
+<<<<<<< HEAD
+P2.do_platform = true;
+P2.do_platform_tone_intersect = true;
+P2.do_platform_reward_tone_intersect = true;
+=======
+P2.do_platform = false;
+P2.do_platform_tone_intersect = false;
+P2.do_platform_reward_tone_intersect = false;
+>>>>>>> parent of 30a9892 (tons of updates)
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
 
 P2.save_analysis = true; % true if save details of analysis
@@ -64,7 +77,11 @@ P2.skip_prev_analysis = false; % true if not redo previous analysis
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
 % event (eg 'tone', 'CSp')
 % NB: these must be the exact names and spelling of
+<<<<<<< HEAD
+P2.cue = {P2.pc_name, bouts_name};
+=======
 P2.cue = {'PC0_', 'CSp'};
+>>>>>>> parent of 30a9892 (tons of updates)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -173,7 +190,11 @@ for j = 1:length(P2.video_folder_list)
 
     %% calculate peaks of epoc signal
     if P2.do_peak
+<<<<<<< HEAD
+        [peaks, peaks_ind_trials] = calcPeaks(P2, zall, P2.peakWnd, ct);
+=======
         peaks = calcPeaks(P2, zall, P2.peakWnd, ct);
+>>>>>>> parent of 30a9892 (tons of updates)
     end
     %% calculate AUC of epoc signals
     if P2.do_auc
@@ -192,7 +213,7 @@ for j = 1:length(P2.video_folder_list)
     end
 
     %% split platform between tone and nontone periods
-    if P2.do_platform_tone_intersect & exist("on_platform_shock","var")
+    if P2.do_platform_tone_intersect
         [zall_pf_nontone, zall_pf_during_tone] = go_platform_tone_intersect(bhsig, Behavior, 5, on_platform_shock, P2);
     else
         zall_pf_nontone = [];
@@ -200,7 +221,7 @@ for j = 1:length(P2.video_folder_list)
     end
 
     %% split tone onsets between platform, reward zone, and neither
-    if P2.do_platform_reward_tone_intersect & exist("on_platform_shock","var")
+    if P2.do_platform_reward_tone_intersect
         [zall_pf_nontone, zall_pf_during_tone] = go_reward_tone_intersect(bhsig, Behavior, 5, on_platform_shock, P2);
     else
         zall_pf_nontone = [];
@@ -278,12 +299,36 @@ for j = 1:length(P2.video_folder_list)
         if ~exist('zall_pf_during_tone','var')
             zall_pf_during_tone = [];
         end
+<<<<<<< HEAD
+        if ~exist('peaks_ind_trials','var')
+            peaks_ind_trials = [];
+        end
+
+%%
+% determine animal ID and day ID
+% Split the string at underscores
+parts = split(exp_ID, '_');
+
+% Check if the split parts are as expected
+if numel(parts) ~= 3
+    error('exp_ID format is invalid. Expected format: XXXX_XXXX_XX');
+end
+
+% Extract animal_ID and day_ID
+animal_ID = string(parts(1));
+day_ID = string(parts(3));
+=======
+>>>>>>> parent of 30a9892 (tons of updates)
 
         P2.event_on = pre_dur;
         P2.event_off = epoc_length;
         savename = [basedir '\' P2.exp_ID '_' bouts_name '_fibpho_analysis.mat'];
         if P2.save_analysis
+<<<<<<< HEAD
+          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'peaks', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit', 'peaks_ind_trials');
+=======
           save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'peaks', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit');
+>>>>>>> parent of 30a9892 (tons of updates)
         end
 end
 
@@ -505,7 +550,11 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+<<<<<<< HEAD
+function [peaks, peaks_ind_trials] = calcPeaks(P2, zall, peakWnd, ct)        
+=======
 function peaks = calcPeaks(P2, zall, peakWnd, ct)        
+>>>>>>> parent of 30a9892 (tons of updates)
     t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
     if isempty(peakWnd)
         z = zall;
@@ -515,11 +564,19 @@ function peaks = calcPeaks(P2, zall, peakWnd, ct)
         z = zall(:,wndStart:wndEnd);
     end
     [peak, latency] = max(mean(z));
+<<<<<<< HEAD
+    [pk_all, lat_all] = max(z,[],2);
+=======
+>>>>>>> parent of 30a9892 (tons of updates)
     latency = mean(latency);
     latency = latency/P2.beh_fps;
     peaks{ct,1} = P2.exp_ID;
     peaks{ct,2} = peak;
     peaks{ct,3} = latency;
+<<<<<<< HEAD
+    peaks_ind_trials = [pk_all, lat_all];
+=======
+>>>>>>> parent of 30a9892 (tons of updates)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -553,11 +610,19 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
 
     % AUC calculated over indiviudual trials, abs
     auc_fc_ind_abs{ct,1} = P2.exp_ID;
+<<<<<<< HEAD
     auc_fc_ind_abs{ct,2} = trapz(abs(zall(:,t0:t0+(round(10*P2.beh_fps)))),2);
     auc_fc_ind_abs{ct,2} = mean(auc_fc_ind_abs{ct,2});
 
     try
         auc_fc_ind_abs{ct,3} = trapz(abs(zall(:,t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps))),2);
+=======
+    auc_fc_ind_abs{ct,2} = trapz(abs(zall(:,t0:t0+(round(10*P2.fp_fps)))),2);
+    auc_fc_ind_abs{ct,2} = mean(auc_fc_ind_abs{ct,2});
+
+    try
+        auc_fc_ind_abs{ct,3} = trapz(abs(zall(:,t0+round(10*P2.fp_fps):t0+round(20*P2.fp_fps))),2);
+>>>>>>> parent of 30a9892 (tons of updates)
         auc_fc_ind_abs{ct,3} = mean(auc_fc_ind_abs{ct,3});
 
     catch
@@ -565,7 +630,11 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
+<<<<<<< HEAD
         auc_fc_ind_abs{ct,4} = trapz(abs(zall(:,t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps))),2);
+=======
+        auc_fc_ind_abs{ct,4} = trapz(abs(zall(:,t0+round(20*P2.fp_fps):t0+round(30*P2.fp_fps))),2);
+>>>>>>> parent of 30a9892 (tons of updates)
         auc_fc_ind_abs{ct,4} = mean(auc_fc_ind_abs{ct,4});
 
     catch
@@ -573,7 +642,11 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
+<<<<<<< HEAD
         auc_fc_ind_abs{ct,5} = trapz(abs(zall(:,t0:t0+round(30*P2.beh_fps))),2);
+=======
+        auc_fc_ind_abs{ct,5} = trapz(abs(zall(:,t0:t0+round(30*P2.fp_fps))),2);
+>>>>>>> parent of 30a9892 (tons of updates)
         auc_fc_ind_abs{ct,5} = mean(auc_fc_ind_abs{ct,5});
     catch
         auc_fc_ind_abs{ct,5} = '';
@@ -581,11 +654,19 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
 
    % AUC calculated over indiviudual trials, not abs
     auc_fc_ind{ct,1} = P2.exp_ID;
+<<<<<<< HEAD
     auc_fc_ind{ct,2} = trapz(zall(:,t0:t0+(round(10*P2.beh_fps))),2);
     auc_fc_ind{ct,2} = mean(auc_fc_ind{ct,2});
 
     try
         auc_fc_ind{ct,3} = trapz(zall(:,t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps)),2);
+=======
+    auc_fc_ind{ct,2} = trapz(zall(:,t0:t0+(round(10*P2.fp_fps))),2);
+    auc_fc_ind{ct,2} = mean(auc_fc_ind{ct,2});
+
+    try
+        auc_fc_ind{ct,3} = trapz(zall(:,t0+round(10*P2.fp_fps):t0+round(20*P2.fp_fps)),2);
+>>>>>>> parent of 30a9892 (tons of updates)
         auc_fc_ind{ct,3} = mean(auc_fc_ind{ct,3});
 
     catch
@@ -593,7 +674,11 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
+<<<<<<< HEAD
         auc_fc_ind{ct,4} = trapz(zall(:,t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps)),2);
+=======
+        auc_fc_ind{ct,4} = trapz(zall(:,t0+round(20*P2.fp_fps):t0+round(30*P2.fp_fps)),2);
+>>>>>>> parent of 30a9892 (tons of updates)
         auc_fc_ind{ct,4} = mean(auc_fc_ind{ct,4});
 
     catch
@@ -601,7 +686,11 @@ function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
     end
 
     try
+<<<<<<< HEAD
         auc_fc_ind{ct,5} = trapz(zall(:,t0:t0+round(30*P2.beh_fps)),2);
+=======
+        auc_fc_ind{ct,5} = trapz(zall(:,t0:t0+round(30*P2.fp_fps)),2);
+>>>>>>> parent of 30a9892 (tons of updates)
         auc_fc_ind{ct,5} = mean(auc_fc_ind{ct,5});
     catch
         auc_fc_ind{ct,5} = '';
@@ -641,16 +730,25 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     % baseline to be zeroed
     zall_offset = zall - mean(mean(zall));
     for i = 1:size(zall,1)
+<<<<<<< HEAD
+        %zall_offset(i,:) = smooth(zall_offset(i,:),25);
+    end
+=======
         zall_offset(i,:) = zall_offset(i,:) - mean(zall_offset(1:50));
         zall_offset(i,:) = smooth(zall_offset(i,:),25);
     end
     mean_zall = mean(zall_offset);
     std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
+>>>>>>> parent of 30a9892 (tons of updates)
     sem_zall = std(zall_offset)/sqrt(size(zall_offset,1));
 
     % plot mean and sem
     fig = figure;
+<<<<<<< HEAD
+    y = mean(zall_offset);
+=======
     y = mean(zall);
+>>>>>>> parent of 30a9892 (tons of updates)
     x = 1:numel(y);
     curve1 = y + sem_zall;
     curve2 = y - sem_zall;

@@ -1,3 +1,14 @@
+%% CalcRewardFrames
+% batch analysis to read in arduino reward data from PMAR, synchronize to
+% FCXD, and save the behavior frames that the reward occurred.
+% Assumes batch folder structure similar to BehaviorDEPOT, minimally
+% requiring FXCD experiment file and reward_data output from arduino in
+% each folder.
+% Output is reward data appended to the experiment file of each folder and
+% csv file containing all reward data across animals.
+
+beh_cam_fps = 50; % fps of behavior camera, default 50
+
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
 P2.script_dir = pwd; % directory with script files (avoids requiring changes to path)
@@ -60,7 +71,7 @@ for filenum = 1:length(P2.video_folder_list)
     nr_beam_ts_ms = nr_beam_ts_ms - start_lag;
     
     % translate arduino timestamp (ms since arduino start) to behavior frame
-    fps = 50;
+    fps = beh_cam_fps;
     
     reward_frames = round(reward_ts_ms / 1000 * fps); % 1000 ms/s, 50 frames/sec
     nonreward_beam_frames = round(nr_beam_ts_ms / 1000 * fps);
@@ -76,7 +87,7 @@ for filenum = 1:length(P2.video_folder_list)
 end
 
 cd(string(P2.video_directory));
-writecell(reward_output, 'batch_reward_frames.csv');
+writecell(reward_output, 'batch_reward_frames2.csv');
 
 %%%%%%%%%%%%%%%
 % INTERNAL FXNS

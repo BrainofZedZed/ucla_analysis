@@ -5,10 +5,9 @@
 % of polygon object is easy calculations of shape properties (area,
 % eccentricity, etc)
 
-%[f p] = uigetfile('.mat', 'Load .mat file with footprints');
-%load([p f]);
-%A = Adata;
-A = finalA;
+[f p] = uigetfile('.mat', 'Load .mat file with footprints');
+load([p f]);
+A = Adata;
 contours = false(size(A));  % empty matrix for cell contours
 centers = zeros(size(A,3),2);  % empty matrix for center calculations
 footprints = polyshape.empty;  % empty polygon array for cell contours
@@ -38,6 +37,4 @@ for i = 1:size(A,3)
      footprint = polyshape(x,y);  % creates a polygon based on vertices
      plot(footprint, 'FaceAlpha', 1, 'FaceColor', 'g');  % plots
      footprint = polyshape.empty;
-     text(centers(i,1), centers(i,2), num2str(i), 'Color', 'k', 'FontSize', 8, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle'); 
-
 end

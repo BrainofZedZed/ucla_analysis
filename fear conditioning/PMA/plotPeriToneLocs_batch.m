@@ -71,7 +71,10 @@ ydim = Params.Video.frameHeight; % y-dimension of video (pixel)
 % ADJUST THIS LINE TO POINT TOWARD TONE EVENT BOUTS OF INTEREST
 tonetimes = Behavior.Temporal.(name_of_tone).Bouts;
 shocktimes = Behavior.Temporal.US.Bouts;
-%tonetimes = tonetimes(4:end,:);  % edit to exclude certain tones (eg (4,:end,:) to include only 4th tone through end
+
+if size(tonetimes,1) > 9
+    tonetimes = tonetimes(4:end,:);
+end
 
 X = Tracking.Smooth.BetwLegs(1,:);
 Y = Tracking.Smooth.BetwLegs(2,:);
