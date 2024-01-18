@@ -1,51 +1,80 @@
 
-folders = {"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\7A_Dec23_redo\deeptrace_analysis\231215_7A_488_08-37-55"};
-dif_thresh = 5;  % default 50 for axon; 5 for ZZ fos
+dif_thresh = 10;  % default 50 for axon; 5 for ZZ fos standard
+
+folders = {"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\1A_segmented\deeptrace_analysis\488_flipped", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\1B\deeptrace_analysis\1B_488_flipped", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\1C\488\deeptrace_analysis\230510_1C_488_09-57-05", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\2A\488\deeptrace_analysis\Flipped_488", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\3A_Dec23\deeptrace_analysis\231215_3A_488_13-43-39", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\3C_redo_Nov23\deeptrace_analysis\231128_3C_08x_480_17-08-27", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\3D\deeptrace_analysis\488_reversed", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\4A\deeptrace_analysis\flipped_480", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\5A\deeptrace_analysis\Flipped_488", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\5B\488_redo\deeptrace_analysis\230515_5B_488_15-29-24", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\5C\488\deeptrace_analysis\230503_5C_488_0_8x_10-29-38", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\6A\488\deeptrace_analysis\230516_6A_488_14-50-12", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\6B_Nov23\deeptrace_analysis\231129_6B_08x_480_08-53-57", ...
+"D:\Whole Brain DeNardo 2023\T2Ai14_PFC_inhib_7d\7A_Dec23_redo\deeptrace_analysis\231215_7A_488_08-37-55" ...
+};
 
 w = folders{1};
 cd(w)
-seg_file_name = 'z_best_weights_checkpoint_FOS_seg_231215_7A_640_08-45-50_aligned.tiff';
-s = imfinfo(seg_file_name);
+
+seg_file_name ={"z_best_weights_checkpoint_FOS_seg_640_flipped_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_1B-640_gain5x_flip_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_640_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_Flipped_644_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_3A_640_gain2x_reversed_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_640_gain8x_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_640_reversed_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_flipped_640_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_Flipped 640_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_640_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_640_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_640_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_231129_6B_08x_640_09-01-29_aligned.tiff", ...
+    "z_best_weights_checkpoint_FOS_seg_231215_7A_640_08-45-50_aligned.tiff"...
+    };
+
+s = imfinfo(seg_file_name{1});
 test = uint8(zeros(s(1).Height,s(1).Width,numel(s)));
 
 for brain = 1:length(folders)
     w = folders{brain};
-    for j = 1:1
-        brain
-        tic
-        cd(w)
-        s = imfinfo(seg_file_name);
-        for i = 1:numel(s)
-            test(:,:,i) = imread(seg_file_name,i);
-        end
-        BW = imextendedmax(test,dif_thresh);
-        CC = bwconncomp(BW);
-        
-        %%
-        for i = 1:CC.NumObjects
-            index = CC.PixelIdxList{i};
-            if (numel(index) > 1 && (rem(numel(index),2) == 1))
-                indexmed = median(index);
-                indexnonmed = index(index~=indexmed);
-                BW(indexnonmed) = false;
-            else
-            if (numel(index) > 1)
-                indexmedeven = numel(index)/2;
-                indexmed = index(indexmedeven);
-                indexnonmed = index(index~=indexmed);
-                BW(indexnonmed) = false;
-            end
-            end
-        end
-        BW8 = uint8(BW);
-        options.compress = 'lzw';
-        options.color = 0;
-        options.overwrite = true;
-        %%
-        saveloc = strcat(string(folders(brain)), "\maxpoints.tif");
-        saveastiff(BW8, saveloc{1}, options)
-        %%
+    brain
+    tic
+    cd(w)
+    s = imfinfo(seg_file_name{brain});
+    for i = 1:numel(s)
+        test(:,:,i) = imread(seg_file_name{brain},i);
     end
+    BW = imextendedmax(test,dif_thresh);
+    CC = bwconncomp(BW);
+    
+    %%
+    for i = 1:CC.NumObjects
+        index = CC.PixelIdxList{i};
+        if (numel(index) > 1 && (rem(numel(index),2) == 1))
+            indexmed = median(index);
+            indexnonmed = index(index~=indexmed);
+            BW(indexnonmed) = false;
+        else
+        if (numel(index) > 1)
+            indexmedeven = numel(index)/2;
+            indexmed = index(indexmedeven);
+            indexnonmed = index(index~=indexmed);
+            BW(indexnonmed) = false;
+        end
+        end
+    end
+    BW8 = uint8(BW);
+    options.compress = 'lzw';
+    options.color = 0;
+    options.overwrite = true;
+    %%
+    saveloc = strcat(string(folders(brain)), "\maxpoints_dif10.tif");
+    saveastiff(BW8, saveloc{1}, options)
+    %%
 end
 
 %%

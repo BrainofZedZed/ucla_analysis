@@ -13,12 +13,17 @@ for k = 1:length(fileList)
     cellCountsPaths{k} = fullfile(fileList(k).folder, fileList(k).name);
 end
 
+%%
+% here, need to manually go into cellCountPaths and remove rows that you
+% don't want to be analyzed before continuing
+%%
+
 files = cellCountsPaths;
 
 %% hard code group IDs
 % Define the set of strings to check for assigning 'C'
-cno_names = {'1A', '3C', '4A', '5C', '6A', '6B'};
-saline_names = {'1B', '1C', '3A', '3D', '5A', '5B'};
+cno_names = {'1A', '2A', '3C', '4A', '5C', '6A', '6B'};
+saline_names = {'1B', '1C', '3A', '3D', '5A', '5B', '7A'};
 
 
 % Initialize the group_ID cell array
@@ -32,7 +37,7 @@ for k = 1:length(cellCountsPaths)
 
     % Check for each string in the set
     for str = cno_names
-        if contains(path, str{1})
+        if contains(path, ['\' str{1}])
             group_ID{k} = 'CNO';
             animal_ID{k} = str{1}; % Save the matched string
             break; % Exit the inner loop if a match is found
@@ -40,7 +45,7 @@ for k = 1:length(cellCountsPaths)
     end
     % Check for each string in the set
     for str = saline_names
-        if contains(path, str{1})
+        if contains(path, ['\' str{1}])
             group_ID{k} = 'saline';
             animal_ID{k} = str{1};
             break; % Exit the inner loop if a match is found
@@ -55,6 +60,9 @@ end
 all_counts = [];  % To store cell counts from all files
 
 data_col = 5;  % which column from CellCounts.xlsx to use as data for plot
+% 5 is noramlized by volume and total count
+% 4 is noramlized just by volume
+
 % Loop through each file and extract data
 for i = 1:length(files)
     % Read the 'names' and the counts from the excel file
@@ -124,7 +132,7 @@ cno_data = all_counts(:, strcmp(group_ID, 'CNO'));
 saline_data = all_counts(:, strcmp(group_ID, 'saline'));
 
 region_numbers = [79, 80, 81, 82, 97, 98, 99, 120, 134, 135, 136, 137, 138];
-region_names = names(region_numbers);
+region_stats = names(region_numbers);
 % Specify the rows you want to test
 rowsToTest = region_numbers; % Replace with the row numbers you're interested in
 
@@ -144,5 +152,15 @@ for i = 1:length(rowsToTest)
     [h, p, ci, stats] = ttest2(row_cno_data, row_saline_data);
 
     % Store results
-    region_names{i,2} = p;
+    region_stats{i,2} = p;
 end
+
+%% 
+ca1_row = 79;
+pl_row = 120;
+
+cno_ca1 = cno_data(ca1_row, :);
+saline_ca1 = saline_data(ca1_row,:);
+
+cno_pl = cno_data(pl_row,:);
+saline_pl = saline_data(pl_row,:);

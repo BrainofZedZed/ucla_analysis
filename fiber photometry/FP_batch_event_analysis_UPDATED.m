@@ -30,10 +30,7 @@ P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
-<<<<<<< HEAD
 P2.pc_name = 'PC2_';
-=======
->>>>>>> parent of 30a9892 (tons of updates)
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis

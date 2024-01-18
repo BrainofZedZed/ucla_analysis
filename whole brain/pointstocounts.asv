@@ -1,6 +1,5 @@
 
 % use a unique savename to not overwrite previous versions
-% default name is CellCounts.xlsx
 savename = 'CellCounts_20240109.xlsx';
 
 % point this to the nrrd file containing the atlas
@@ -164,5 +163,5 @@ for brain = 1:numel(folders)
     sorted([1,2,3,63,64,65,130,149],:) = [];
     headers = {'ids', 'name', 'atlas number', 'cell counts normalized by region volume', 'cell counts normalized by region volume and total cells', 'cell counts normalized by total cells', 'raw cell counts', 'parent'};
     output = [headers; sorted];
-    xlswrite(savename, output);
+    xlswrite('CellCounts.xlsx', output);
 end
