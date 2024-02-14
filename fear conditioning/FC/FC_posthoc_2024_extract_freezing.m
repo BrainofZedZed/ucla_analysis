@@ -1,6 +1,6 @@
 %% PARAMS TO EDIT
 % Set your base directory
-baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\SEFL remote memory\pilot behavior_20231226\D28\batch'; % Replace with your directory path
+baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\SEFL remote memory\pilot behavior_20231226\batch\D0'; % Replace with your directory path
 
 % set the output save name
 savefile = 'freezing_data.mat';
