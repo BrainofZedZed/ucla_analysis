@@ -26,7 +26,7 @@ tvec = [0-t_pre t_total];
 % get TDT data, filtered
 %tdt_dir = folderList{tdt_f};
 
-tdt_dir = 'AS_MC-240229-155532';
+tdt_dir = 'AS_MC-240229-155919';
 data = TDTbin2mat(tdt_dir, 'TYPE', {'epocs', 'scalars', 'streams'});
 datafilt = TDTfilter(data, 'PC0/','TIME', tvec);
 
@@ -58,59 +58,35 @@ for i = 1:size(sig,1)
     zsig(i,:)=(sig(i,:) - zb)/zsd; % Z score per bin
 end
 
-% df/f
-for i = 1:size(sig,1)
-    zb = mean(sig(i,1:(tdt_fs*t_pre))); % baseline period mean
-    dff(i,:) = (sig(i,:)-zb)/zb;
+% zero baseline
+for i = 1:size(zsig,1)
+    zb = mean(zsig(i,1:(tdt_fs*(t_pre/2)))); % baseline period mean
+    zsig2(i,:)=(zsig(i,:) - zb); % Z score per bin
 end
 
-
-sig_nolaser = zsig([1 3 5 7],:);
-sig_laser = zsig([2 4 6 8], :);
 
 % plot
 figure;
 hold on;
-for i = 1:size(sig_nolaser,1)
-    plot(sig_nolaser(i,:));
+for i = 1:size(zsig2,1)
+    plot(zsig2(i,:));
 end
 
 plot(mean(sig_nolaser,1), 'LineWidth', 2, 'Color', 'black');
 xline(tdt_fs*t_pre, 'r:');
-xl2 = size(sig,2);
+xl2 = size(zsig,2);
 xl2 = xl2 - (tdt_fs*t_post);
 xline(xl2, 'r:');
-xtx = [0:5:40];
+xtx = [0:5:t_total];
 xtx2 = (xtx*tdt_fs);
 xticks(xtx2);
-xticklabels({'-5','0','5','10','15','20','25', '30', '35', '40'});
-title('tone (CS+) response -- no laser')
-legend('tone1', 'tone2', 'tone3', 'tone4', 'mean');
-xlabel('time from tone onset')
-savefig('D1_CSp_tonesResponse_noLaser.fig');
-
-figure;
-hold on;
-for i = 1:size(sig_laser,1)
-    plot(sig_laser(i,:));
-end
-
-plot(mean(sig_laser,1), 'LineWidth', 2, 'Color', 'black');
-xline(tdt_fs*t_pre, 'r:');
-xl2 = size(sig,2);
-xl2 = xl2 - (tdt_fs*t_post);
-xline(xl2, 'r:');
-xtx = [0:5:40];
-xtx2 = (xtx*tdt_fs);
-xticks(xtx2);
-xticklabels({'-5','0','5','10','15','20','25', '30', '35', '40'});
-title('tone (CS+) response -- laser')
-legend('tone1', 'tone2', 'tone3', 'tone4', 'mean');
-xlabel('time from tone+laser onset')
+xticklabels({'-5','0','5','10','15','20'});
+title('AS MC averaged photometry signal - 5mW laser');
+legend('laser1','laser2','laser3','on','off');
+xlabel('time from laser onset');
 ylabel('zscore');
-savefig('D1_CSp_toneResponse_Laser.fig');
 
-save('D1_CSp_toneResponse.mat')
+
 
 %% code graveyard
 % tdt_start = datevec(datafilt.info.utcStartTime);
