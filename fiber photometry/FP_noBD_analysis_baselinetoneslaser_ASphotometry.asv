@@ -94,6 +94,6 @@ mean_post = mean(zsig2_smth(:,tdt_fs*(t_pre+cs_dur):end),2);
 % plot
 figure;
 hold on;
-for i = 1:14:size(zsig,1)
+for i = 1::size(zsig,1)
     plot(zsig(i,:));
 end
