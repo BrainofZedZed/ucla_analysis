@@ -2,12 +2,12 @@
 % define pre and post times to visualize
 t_pre = 10;
 t_post = 10;
-cs_dur = 15;
+cs_dur = 30;
 t_total = t_pre+t_post+cs_dur;
 tvec = [0-t_pre t_total];
 
 % get TDT data, filter for just the periods around the TTLs
-tdt_dir = 'AS_ME-240229-160923';
+tdt_dir = 'AS_FE-240229-164815';
 data = TDTbin2mat(tdt_dir, 'TYPE', {'epocs', 'scalars', 'streams'});
 datafilt = TDTfilter(data, 'PC0/','TIME', tvec);
 
@@ -65,7 +65,7 @@ xtx = [0:10:t_total];
 xtx2 = (xtx*tdt_fs);
 xticks(xtx2);
 xticklabels({'-10','0','10','20','30','+10'});
-title('AS FC laser signal');
+title('AS FE Ctxt A yoked signal');
 %legend('laser1','laser2','laser3','on','off');
 xlabel('time from laser onset');
 ylabel('zscore');

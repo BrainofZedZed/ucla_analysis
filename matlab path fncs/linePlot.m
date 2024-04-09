@@ -6,7 +6,7 @@
 function [varargout]  = linePlot(zall, xlines, xlineNames)
 
     % Subtract DC offset to get signals on top of one another
-    zall_offset = zall - mean(mean(zall));
+    %zall_offset = zall - mean(mean(zall));
     %zall_offset = zall_offset - mean(zall_offset(1:250));
     zall_offset = zall;
     mean_zall = mean(zall_offset);
