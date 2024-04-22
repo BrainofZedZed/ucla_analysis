@@ -113,10 +113,10 @@ frz_on_avg = [dp066_frz_on_avg; dp068_frz_on_avg; dp069_frz_on_avg; dp088_frz_on
 frz_off_avg = [dp066_frz_off_avg; dp068_frz_off_avg; dp069_frz_off_avg; dp088_frz_off_avg; dp090_frz_off_avg; dp091_frz_off_avg];
 
 %% plot and quantify
-pf_on_offset = mean(frz_on_avg(:,100:150),2);
+pf_on_offset = mean(frz_on_avg(:,100:110),2);
 pf_on_avg = frz_on_avg - pf_on_offset;
 
-pf_off_offset = mean(frz_off_avg(:,100:150),2);
+pf_off_offset = mean(frz_off_avg(:,100:110),2);
 pf_off_avg = frz_off_avg - pf_off_offset;
 
 

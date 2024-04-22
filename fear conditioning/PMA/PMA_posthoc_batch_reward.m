@@ -26,7 +26,7 @@ P2.baseline_tones = 0;  % number of baseline tones not paired with shock
 
 P2.do_plot = false; % whether or not to plot some of the measurements. possible broken 20230526
 P2.do_implant_in_reward = true; % makes new ROI detection, looking for ROI 'reward' using part 'Implant'
-P2.make_reward_roi_small = true; % true if want to reduce size of reward ROI by half vertically
+P2.make_reward_roi_small = false; % true if want to reduce size of reward ROI by half vertically
 P2.do_head_pf_entry_count = false; % counts head as pf entry/exit instead of midback
 P2.exclude_freeze_in_reward = true; % excludes freeze counts when head is in reward ROI
 
@@ -220,31 +220,37 @@ end
 first_pf_avg = mean(first_pf);
 
 %% Part 4b: calculating successful avoids
-shock_start_frames = cueframes.US(:,1);
-avoids = zeros(size(shock_start_frames));
-for i = 1:length(avoids)
-    if on_pf(shock_start_frames(i))
-        avoids(i) = 1;
+skip_shock = true;
+if ~skip_shock
+    shock_start_frames = cueframes.US(:,1);
+    avoids = zeros(size(shock_start_frames));
+    for i = 1:length(avoids)
+        if on_pf(shock_start_frames(i))
+            avoids(i) = 1;
+        end
     end
+    avoids = avoids';
+    
+    avoids_avg = mean(avoids);
+    
+    figure;
+    datamat = avoids;
+    x = 1:size(datamat,2);
+    hold on
+    plot(x,datamat, '-o');
+    xlabel('tone');
+    ylim([-0.5 1.5]);
+    xlim([0 size(avoids,2)+1])
+    yticks([0 1]);
+    yticklabels({'shock', 'avoid'});
+    title([id ' shock avoids']);
+    savename = [id 'avoids.fig'];
+    savefig(savename);
+    close;
+else
+    shock_start_frames = cueframes.CSp(:,1);
+    avoids = zeros(size(shock_start_frames));
 end
-avoids = avoids';
-
-avoids_avg = mean(avoids);
-
-figure;
-datamat = avoids;
-x = 1:size(datamat,2);
-hold on
-plot(x,datamat, '-o');
-xlabel('tone');
-ylim([-0.5 1.5]);
-xlim([0 size(avoids,2)+1])
-yticks([0 1]);
-yticklabels({'shock', 'avoid'});
-title([id ' shock avoids']);
-savename = [id 'avoids.fig'];
-savefig(savename);
-close;
 
 %% Part ?: calculating ITI time on platform
 on_pf = Behavior.Spatial.platform.inROIvector;
@@ -276,19 +282,19 @@ out.per_tone_platform_frz(filenum,:) = [{id}, num2cell(tone_pf_frz)];
 out.per_tone_off_platform_frz(filenum,:) = [{id}, num2cell(tone_off_pf_frz)];
 out.per_time_platform(filenum,:) = [{id}, num2cell(per_tp_tone)];
 out.plat_latency(filenum,:) = [{id}, num2cell(first_pf)];
-out.avoids(filenum,:) = [{id}, num2cell(avoids)];
+%out.avoids(filenum,:) = [{id}, num2cell(avoids)];
 out.per_iti_platform(filenum,:) = [{id}, num2cell(iti_pf_proportion)];
 out.per_reward_zone(filenum,:) = [{id}, num2cell(reward_time)];
 out.normal_pf_bouts(filenum,:) = [{id}, {Behavior.Spatial.platform.Bouts}];
 out.reward_bouts(filenum,:) = [{id}, {Behavior.Spatial.reward.Bouts}];
-out.head_pf_bouts(filenum,:) = [{id}, {Behavior.Spatial.platform_head_bouts}];
+%out.head_pf_bouts(filenum,:) = [{id}, {Behavior.Spatial.platform_head_bouts}];
 out.platform_tone_bouts(filenum,:) = [{id}, {pf_tone_bouts}];
 out.avg.tone_frz(filenum,:) = [{id}, num2cell(tone_frz_avg)];
 out.avg.tone_pf_frz(filenum,:) = [{id}, num2cell(tone_pf_frz_avg)];
 out.avg.tone_off_pf_frz_avg(filenum,:) = [{id}, num2cell(tone_off_pf_frz_avg)];
 out.avg.per_pf_time_tone_avg(filenum,:) = [{id}, num2cell(per_pf_tone_avg)];
 out.avg.plat_latency(filenum,:) = [{id}, num2cell(first_pf_avg)];
-out.avg.avoids(filenum,:) = [{id}, num2cell(avoids_avg)];
+%out.avg.avoids(filenum,:) = [{id}, num2cell(avoids_avg)];
 
 
 

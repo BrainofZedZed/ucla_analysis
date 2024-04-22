@@ -1,0 +1,40 @@
+inputDir = 'C:\Users\boba4\Box\Zach_repo\Projects\DA PMA\PMAR_JAWS\cohort2_laser_tone\batch';
+% Initialize output cell arrays with headers
+output1 = {'exp_ID', 'rewards_in_tone'};
+output2 = {'exp_ID', 'rewards_in_tone', 'tone_frames', 'all_rewards'};
+
+% Get a list of all subdirectories
+subDirs = dir(inputDir);
+isSub = [subDirs(:).isdir];
+subDirNames = {subDirs(isSub).name}';
+subDirNames(ismember(subDirNames, {'.', '..'})) = [];
+
+% Iterate over each subdirectory
+for d = 1:length(subDirNames)
+    currentDir = fullfile(inputDir, subDirNames{d});
+    % List all .mat files
+    files = dir(fullfile(currentDir, '*.mat')); 
+
+    % Process each file
+    for f = 1:length(files)
+        fileName = files(f).name;
+       % Assuming data.reward_frames is a one-dimensional array
+            if isfield(data, 'reward_frames') && isfield(data, 'cueframes') && isfield(data, 'exp_ID')
+                rewardsDuringTone = 0;
+                for i = 1:size(data.cueframes.CSp, 1)
+                    % Count how many rewards are during each tone interval
+                    rewardsDuringTone = rewardsDuringTone + ...
+                        sum(data.reward_frames > data.cueframes.CSp(i, 1) & ...
+                            data.reward_frames < data.cueframes.CSp(i, 2));
+                end
+            
+                % Append to output arrays
+                output1(end+1, :) = {data.exp_ID, rewardsDuringTone};
+                output2(end+1, :) = {data.exp_ID, rewardsDuringTone, toneFrames, data.reward_frames};
+            end
+        end
+end
+
+% Display the results
+disp(output1);
+disp(output2);
