@@ -55,7 +55,7 @@ P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes fir
 
 P2.save_analysis = true; % true if save details of analysis
 P2.skip_prev_analysis = false; % true if not redo previous analysis
-
+P2.do_shock_discover = false;
 %% REGISTER TDT TTL AND BEHDEPOT CUE NAME
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
@@ -133,6 +133,7 @@ for j = 1:length(P2.video_folder_list)
     cd([bdf.folder '\' bdf.name]); % move to behdepot output folder
     load('Behavior.mat');
     load('Params.mat');
+    load('Tracking.mat');
     cd(basedir);
     exp_file = dir('*-*-*_*-*-*.mat');
     load(exp_file.name); % load experiment file
@@ -162,6 +163,10 @@ for j = 1:length(P2.video_folder_list)
     %% calcuate signal over epocs (tones)
     [P2, zall] = calcSignalEpoc(Params, P2, bouts, data, bhsig);
     
+    %% determine if animal was on platform or not for the shock
+    if P2.do_shock_discover
+        on_platform_shock = go_shock(zall, Tracking, Behavior, Params);
+    end
     %% plot heatmap of tones
     go_heatmap(zall, bouts_name, [P2.pre_dur, P2.tone_dur+P2.pre_dur], P2);
 
@@ -1121,4 +1126,24 @@ function [zall_pf_nontone, zall_pf_during_tone] = go_reward_tone_intersect(bhsig
         go_lineplot(zall_pf_during_tone, 'Platform entries during tone', [P2.pre_pf_window], P2);
     end
 end
+
+    function [on_platform_shock] = go_shock(zall, Tracking, Behavior, Params)
+        X = Tracking.Smooth.BetwLegs(1,:);
+        Y = Tracking.Smooth.BetwLegs(2,:);
+        location = [X;Y];
+    
+        shocktimes = Behavior.Temporal.US.Bouts;
+    
+        on_platform_shock = zeros(size(zall,1),1);
+        
+        for i = 1:size(shocktimes,1)
+            loc = location(:,shocktimes(i,1):shocktimes(i,2));
+            xloc = loc(1,:);
+            yloc = loc(2,:);
+            ploc = Params.roi{1};
+            in = inpolygon(xloc,yloc,ploc(:,1),ploc(:,2));
+        end
+        % record whether location is on platform during shock times
+        on_platform_shock(i) = all(in);
+    end
     

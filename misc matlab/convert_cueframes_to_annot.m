@@ -1,3 +1,10 @@
+% Script to convert FCXD cue frames to Bento .annot format
+% Also interpolates calcium data (miniscope or photometry) to match video
+% length for display purposes
+% NOTE: assumes that calcium and video data begin together and end
+% together. If calcium data starts/ends outside video time, manually trim
+% calcium variable so start and end match video
+
 cueframes_file = 'cueframes.mat'; % file holding cueframes
 video_file = 'concat_beh.avi'; % file of behavior video
 calcium_file = 'cnmf_c.mat'; % file holding calcium data with solo variable

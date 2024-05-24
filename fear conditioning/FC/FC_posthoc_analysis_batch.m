@@ -90,7 +90,9 @@ e_names = fieldnames(e);
 e_index = zeros(1,size(xd,2));
 e_freeze = cell(size(c));
 
-
+if size(xd,1) == 5
+    xd = xd(1:4,:);
+end
 %% create event key
 numevents = size(xd,2);
 for i = 1:numevents

@@ -1,6 +1,6 @@
 %% PARAMS TO EDIT
 % Set your base directory
-baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\PL-BLA inhibition\batch\D28\batch'; % Replace with your directory path
+baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\PL-BLA inhibition\PL-BLA_April2024\batch\D1'; % Replace with your directory path
 
 % set the output save name
 savefile = 'freezing_data.mat';

@@ -19,14 +19,14 @@ end
 % define pre and post times to visualize
 t_pre = 5;
 t_post = 5;
-cs_dur = 15;
+cs_dur = 30;
 t_total = t_pre+t_post+cs_dur;
 tvec = [0-t_pre t_total];
 
 % get TDT data, filtered
 %tdt_dir = folderList{tdt_f};
 
-tdt_dir = 'AS_MC-240229-155532';
+tdt_dir = 'DP092-231023-094821';
 data = TDTbin2mat(tdt_dir, 'TYPE', {'epocs', 'scalars', 'streams'});
 datafilt = TDTfilter(data, 'PC0/','TIME', tvec);
 
@@ -35,6 +35,7 @@ tdt_fs = datafilt.streams.x465A.fs;
 % load 465 from 405 signal
 s465 = datafilt.streams.x465A.filtered;
 s405 = datafilt.streams.x405A.filtered;
+
 
 % Fitting 405 channel onto 465 channel to detrend signal bleaching
 % Algorithm sourced from Tom Davidson's Github:
@@ -56,6 +57,7 @@ for i = 1:size(sig,1)
     zb = mean(sig(i,1:(tdt_fs*t_pre))); % baseline period mean
     zsd = std(sig(i,1:(tdt_fs*t_pre))); % baseline period stdev
     zsig(i,:)=(sig(i,:) - zb)/zsd; % Z score per bin
+    zsig_smth(i,:) = smooth(zsig(i,:),tdt_fs/4);
 end
 
 % df/f

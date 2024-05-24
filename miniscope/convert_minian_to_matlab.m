@@ -5,11 +5,7 @@
 % The structure of Cdata is Cdata(amplitude_frame,cell_number), where amplitude_frame will be the amplitude of C in that frame for a given cell_number.
 clear;
 
-<<<<<<< HEAD
-minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\cohort7_20231018\batch\ZZ200_D1\2023_10_25\12_46_09\My_V4_Miniscope\minian\minian_dataset.nc";
-=======
-minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort6\2023_04_18\13_05_49\My_V4_Miniscope\minian\minian_dataset.nc";
->>>>>>> parent of 30a9892 (tons of updates)
+minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\soma_gcamp_PL\miniscope data\hab\ZZ228_hab\2024_03_12\15_36_41\My_V4_Miniscope\minian_OneTemporalNoSpatialUpdate\minian_dataset.nc";
 Adata  = ncread(minian_ds_path,'A');
 Cdata  = ncread(minian_ds_path,'C');
 Cdata = Cdata';
