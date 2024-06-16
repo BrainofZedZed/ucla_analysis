@@ -23,14 +23,14 @@ clear;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
 P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize, containing of baseline period
-P2.baseline_per = [-4 -5]; % baseline period relative to epoc onset for normalizing
+P2.baseline_per = [0.5 0]; % [sec_earlier, sec_later] period relative to epoc onset for normalizing
 
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
-P2.pc_name = 'PC1_';
+P2.pc_name = 'PC0_';
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis
@@ -42,20 +42,19 @@ P2.cleanbeh2fp = true; % true if hardcode fix poor behavior and photometry align
 %% USER DEFINED PLOTTING & ANALYSIS
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-P2.do_lineplot = true;
-P2.do_heatmap = true;
-P2.do_peak = true;
-P2.do_auc = true;
+P2.do_lineplot = false;
+P2.do_heatmap = false;
+P2.do_peak = false;
+P2.do_auc = false;
 
 % PMA specific analyses
 P2.do_platform = 0;
 P2.do_platform_tone_intersect = 0;
 P2.do_platform_reward_tone_intersect = 0;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
-
-P2.save_analysis = true; % true if save details of analysis
-P2.skip_prev_analysis = false; % true if not redo previous analysis
 P2.do_shock_discover = false;
+
+
 %% REGISTER TDT TTL AND BEHDEPOT CUE NAME
 % identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
@@ -99,7 +98,8 @@ for j = 1:length(P2.video_folder_list)
     clearvars -except 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs' 'bouts_name';
     % Initialize 
     ct = ct+1; % increase count
-    current_video = P2.video_folder_list(j);    
+    current_video = P2.video_folder_list(j);  
+    disp(current_video);
     video_folder = strcat(P2.video_directory, '\', current_video);
     cd(video_folder) %Folder with data files   
 
@@ -165,7 +165,7 @@ for j = 1:length(P2.video_folder_list)
     
     %% determine if animal was on platform or not for the shock
     if P2.do_shock_discover
-        on_platform_shock = go_shock(zall, Tracking, Behavior, Params);
+        on_platform_shock = go_shock_discoverer(zall, Tracking, Behavior, Params);
     end
     %% plot heatmap of tones
     go_heatmap(zall, bouts_name, [P2.pre_dur, P2.tone_dur+P2.pre_dur], P2);
@@ -373,6 +373,11 @@ function [data, s405, s465, sig] = cleanFPData(basedir,P2)
     s465 = s465(1:P2.fp_ds_factor:end);
     s405 = s405(1:P2.fp_ds_factor:end);
     
+    % hard code correction to match signals
+    if length(s465)>length(s405)
+        s465 = s465(1:length(s405));
+        disp('465 and 405 channels have different lengths. matching shorter length');
+    end
     % Fitting 405 channel onto 465 channel to detrend signal bleaching
     % Algorithm sourced from Tom Davidson's Github:
     % https://github.com/tjd2002/tjd-shared-code/blob/master/matlab/photometry/FP_normalize.m
@@ -402,9 +407,13 @@ fp.pc_times = [TDTdata.epocs.(cue{1}).onset, TDTdata.epocs.(cue{1}).offset];
 %hardcode to remove erroneous cues in TDT data
 dif = fp.pc_times(:,2) - fp.pc_times(:,1);
 drop_row = [];
-for i = 1:length(dif)
-    if dif(i) < 2
-        drop_row = [drop_row, i];
+
+do_skip = false;
+if do_skip
+    for i = 1:length(dif)
+        if dif(i) < 2
+            drop_row = [drop_row, i];
+        end
     end
 end
 
@@ -489,8 +498,10 @@ function [P2, zall] = calcSignalEpoc(Params, P2, bouts, data, bhsig)
             zsd = std(bhsig((beh_ts(i,1)-bl(1):beh_ts(i,1)-bl(2)))); % baseline period stdev
             zall(i,:)=(bhsig(beh_ts(i,1):beh_ts(i,2)-1) - zb)/zsd; % Z score per bin
             zall(i,:)=smooth(zall(i,:),25);  % optional smoothing
+            zall(i,:) = zall(i,:) - mean(mean(zall(i,:))); % adjust for DC offset
+            zall(i,:)=zall(i,:) - mean(zall(i,pre_dur-bl(1):pre_dur-(bl(2)))); % adjust baseline period to be 0
         end
-   
+  
         % get fp fps
         P2.fp_fps = data.streams.x465A.fs;
         P2.fp_fps = round(P2.fp_fps/P2.fp_ds_factor);
@@ -644,7 +655,7 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     zall_offset = zall - mean(mean(zall));
     for i = 1:size(zall,1)
         zall_offset(i,:) = zall_offset(i,:) - mean(zall_offset(1:50));
-        zall_offset(i,:) = smooth(zall_offset(i,:),25);
+        %zall_offset(i,:) = smooth(zall_offset(i,:),25);
     end
     mean_zall = mean(zall_offset);
     std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
@@ -1127,9 +1138,9 @@ function [zall_pf_nontone, zall_pf_during_tone] = go_reward_tone_intersect(bhsig
     end
 end
 
-    function [on_platform_shock] = go_shock(zall, Tracking, Behavior, Params)
-        X = Tracking.Smooth.BetwLegs(1,:);
-        Y = Tracking.Smooth.BetwLegs(2,:);
+function [on_platform_shock] = go_shock_discoverer(zall, Tracking, Behavior, Params)
+        X = Tracking.Smooth.BetwShoulders(1,:);
+        Y = Tracking.Smooth.BetwShoulders(2,:);
         location = [X;Y];
     
         shocktimes = Behavior.Temporal.US.Bouts;
@@ -1142,8 +1153,7 @@ end
             yloc = loc(2,:);
             ploc = Params.roi{1};
             in = inpolygon(xloc,yloc,ploc(:,1),ploc(:,2));
+            on_platform_shock(i) = all(in);
         end
-        % record whether location is on platform during shock times
-        on_platform_shock(i) = all(in);
     end
     

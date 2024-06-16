@@ -8,11 +8,20 @@ function [varargout]  = linePlot(zall, xlines, xlineNames)
     % Subtract DC offset to get signals on top of one another
     %zall_offset = zall - mean(mean(zall));
     %zall_offset = zall_offset - mean(zall_offset(1:250));
-    zall_offset = zall;
+    for i = 1:size(zall,1)
+        zall_offset(i,:) = zall(i,:) - mean(zall(i,1:xlines(1)));
+    end
     mean_zall = mean(zall_offset);
     std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
     sem_zall = std(zall_offset)/sqrt(size(zall_offset,1));
     
+    %plot individual lines
+    figure; 
+    plot(zall_offset');
+    for i = 1:length(xlines)
+        xline(xlines(i),':');
+    end
+
     % plot mean and sem
     fig = figure;
     y = mean_zall;
