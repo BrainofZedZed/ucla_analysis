@@ -23,14 +23,14 @@ clear;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
 P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize, containing of baseline period
-P2.baseline_per = [0.5 0]; % [sec_earlier, sec_later] period relative to epoc onset for normalizing
+P2.baseline_per = [0.5 0.1]; % [sec_earlier, sec_later] period relative to epoc onset for normalizing
 
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
-P2.pc_name = 'PC0_';
+P2.pc_name = 'PC1_';
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis
@@ -60,7 +60,7 @@ P2.do_shock_discover = false;
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
 % event (eg 'tone', 'CSp')
 % NB: these must be the exact names and spelling of
-P2.cue = {'PC0_', 'CSp'};
+P2.cue = {'PC1_', 'CSp'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -652,11 +652,14 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
 
     % Subtract DC offset to get signals on top of one another and adjust
     % baseline to be zeroed
-    zall_offset = zall - mean(mean(zall));
+   % zall_offset = zall - mean(mean(zall));
+    %zall_offset = zall_offset - mean(zall_offset(1:250));
     for i = 1:size(zall,1)
-        zall_offset(i,:) = zall_offset(i,:) - mean(zall_offset(1:50));
-        %zall_offset(i,:) = smooth(zall_offset(i,:),25);
+        zall_offset(i,:) = zall(i,:) - mean(zall(i,P2.pre_dur-(P2.beh_fps*P2.baseline_per(1)):P2.pre_dur-(P2.beh_fps*P2.baseline_per(2))));
     end
+    mean_zall = mean(zall_offset);
+    std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
+    sem_zall = std(zall_offset)/sqrt(size(zall_offset,1));
     mean_zall = mean(zall_offset);
     std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
     sem_zall = std(zall_offset)/sqrt(size(zall_offset,1));
