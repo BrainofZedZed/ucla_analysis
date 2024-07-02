@@ -1,6 +1,6 @@
 %% PARAMS TO EDIT
 % Set your base directory
-baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\TeNT\TRAP TeNT_novelEnvironment\batch'; % Replace with your directory path
+baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\DA PMA\fiber photometry\GRABDA_Yoked_FC\batch'; % Replace with your directory path
 
 % set the output save name
 savefile = 'freezing_data.mat';
