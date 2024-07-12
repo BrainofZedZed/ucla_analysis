@@ -23,14 +23,14 @@ clear;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
 P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize, containing of baseline period
-P2.baseline_per = [0.5 0.1]; % [sec_earlier, sec_later] period relative to epoc onset for normalizing
+P2.baseline_per = [1 0.1]; % [sec_earlier, sec_later] period relative to before epoc onset for normalizing
 
 P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
-P2.pc_name = 'PC1_';
+P2.pc_name = 'PC2_';
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis
@@ -42,9 +42,9 @@ P2.cleanbeh2fp = true; % true if hardcode fix poor behavior and photometry align
 %% USER DEFINED PLOTTING & ANALYSIS
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-P2.do_lineplot = false;
-P2.do_heatmap = false;
-P2.do_peak = false;
+P2.do_lineplot = true;
+P2.do_heatmap = true;
+P2.do_peak = true;
 P2.do_auc = false;
 
 % PMA specific analyses
@@ -60,7 +60,7 @@ P2.do_shock_discover = false;
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
 % event (eg 'tone', 'CSp')
 % NB: these must be the exact names and spelling of
-P2.cue = {'PC1_', 'CSp'};
+P2.cue = {'PC2_', 'CSp'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -175,7 +175,10 @@ for j = 1:length(P2.video_folder_list)
 
     %% calculate peaks of epoc signal
     if P2.do_peak
-        peaks = calcPeaks(P2, zall, P2.peakWnd, ct);
+        i_peak = calcPeaks(P2, zall, P2.peakWnd);
+        peaks{ct,1} = i_peak{1,1};
+        peaks{ct,2} = i_peak{1,2};
+        peaks{ct,3} = i_peak{1,3};
     end
     %% calculate AUC of epoc signals
     if P2.do_auc
@@ -214,8 +217,8 @@ for j = 1:length(P2.video_folder_list)
     %% SAVE INDIVIDUAL ANIMAL DATA (to be factorized)
      %% Save individual animal data
         bhsig = sig(beh2fp);
-        if ~exist('peaks','var')
-            peaks = {};
+        if ~exist('i_peak','var')
+            i_peak = {};
         end
         if ~exist('peak_names','var')
             peak_names = [];
@@ -285,7 +288,7 @@ for j = 1:length(P2.video_folder_list)
         P2.event_off = epoc_length;
         savename = [basedir '\' P2.exp_ID '_' bouts_name '_fibpho_analysis.mat'];
         if P2.save_analysis
-          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'peaks', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit');
+          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'i_peak', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit');
         end
 end
 
@@ -518,7 +521,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function peaks = calcPeaks(P2, zall, peakWnd, ct)        
+function i_peak = calcPeaks(P2, zall, peakWnd)        
     t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
     if isempty(peakWnd)
         z = zall;
@@ -530,9 +533,9 @@ function peaks = calcPeaks(P2, zall, peakWnd, ct)
     [peak, latency] = max(mean(z));
     latency = mean(latency);
     latency = latency/P2.beh_fps;
-    peaks{ct,1} = P2.exp_ID;
-    peaks{ct,2} = peak;
-    peaks{ct,3} = latency;
+    i_peak{1} = P2.exp_ID;
+    i_peak{2} = peak;
+    i_peak{3} = latency;
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
