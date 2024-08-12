@@ -17,7 +17,7 @@ import ntpath # alternative to os.path that is OS agnostic
 import natsort # for function natsorted
 
 #%%  create output
-path = r"G:\2023_02_09" # define path
+path = r"C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\cohort7_20231018\ZZ208_D28_2\2023_12_05\13_48_33" # define path
 path_wc = path + "\**\My_WebCam" # add search area:  ** indicates any number of subdir
 cam_dirs = glob.glob(path_wc, recursive = True) # get all subdirectories with My_WebCam
 
@@ -41,7 +41,7 @@ for j in range(len(cam_dirs)):  # loop through each dir
         out_cat = out_cat + x + '|'  # create string with bar between all names
     
     out_cat = out_cat[:-1] # remove last bar
-    out_cat = 'ffmpeg -i "concat:' + out_cat + '"' + ' -c copy temp.avi \nffmpeg -i temp.avi -c:v libx264 -preset slow -crf 17 -c:a copy concat_beh.avi \n'  # put into ffmpeg command
+    out_cat = 'ffmpeg -i "concat:' + out_cat + '"' + ' -c copy temp.avi \nffmpeg -i temp.avi -c:v libx264 -preset fast -crf 17 -c:a copy concat_beh.avi \n'  # put into ffmpeg command
     cd_line = 'cd ' + "\"" + i_dir + "\"" + '\n'
     del_line = 'del /f temp.avi\n\n'
     out_full = cd_line + out_cat + del_line
@@ -51,3 +51,5 @@ for j in range(len(cam_dirs)):  # loop through each dir
 
 with open(path+'to_concat4.txt', 'w') as f:
     f.write(final_out)
+
+# %%

@@ -25,12 +25,12 @@ P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indica
 P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize, containing of baseline period
 P2.baseline_per = [1 0.1]; % [sec_earlier, sec_later] period relative to before epoc onset for normalizing
 
-P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
+P2.remove_last_trials = 1; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
 P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
 P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
 
-P2.pc_name = 'PC2_';
+P2.pc_name = 'PC0_';
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis
@@ -60,7 +60,7 @@ P2.do_shock_discover = false;
 % of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
 % event (eg 'tone', 'CSp')
 % NB: these must be the exact names and spelling of
-P2.cue = {'PC2_', 'CSp'};
+P2.cue = {'PC0_', 'CSp'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -123,9 +123,10 @@ for j = 1:length(P2.video_folder_list)
 
     bouts = Behavior.Temporal.(bouts_name).Bouts;
 
-    if P2.remove_last_trials
-        bouts = bouts(1:end-1,:);
-    end
+    % moved into calcSignalEpoc fxn 20240722
+   % if P2.remove_last_trials
+   %     bouts = bouts(1:end-1,:);
+   % end
 
     %% load stuff from current folder
     basedir = pwd;

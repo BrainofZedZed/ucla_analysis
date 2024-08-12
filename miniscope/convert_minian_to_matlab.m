@@ -4,29 +4,22 @@
 % The structure of Adata is Adata(x,y,cell_number) 
 % The structure of Cdata is Cdata(amplitude_frame,cell_number), where amplitude_frame will be the amplitude of C in that frame for a given cell_number.
 clear;
-
-minian_ds_path = "C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\ZZ206\ZZ206_D28\2024_01_10\12_13_53\My_V4_Miniscope\minian\minian_dataset.nc";
-Adata  = ncread(minian_ds_path,'A');
-Cdata  = ncread(minian_ds_path,'C');
+minian_ds_path = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\cohort7_20231018\ZZ208_D28_2\2023_12_05\13_48_33\My_V4_Miniscope\minian';
+minian_ds_file = [minian_ds_path '\minian_dataset.nc'];
+Adata  = ncread(minian_ds_file,'A');
+Cdata  = ncread(minian_ds_file,'C');
 Cdata = Cdata';
-Sdata  = ncread(minian_ds_path,'S');
+Sdata  = ncread(minian_ds_file,'S');
 Sdata = Sdata';
-bdata = ncread(minian_ds_path, 'b');
-fdata = ncread(minian_ds_path, 'f');
-%vid = ncread(minian_ds_path, 'Y_fm_chk');
-max_proj = ncread(minian_ds_path, 'max_proj');
+bdata = ncread(minian_ds_file, 'b');
+fdata = ncread(minian_ds_file, 'f');
+max_proj = ncread(minian_ds_file, 'max_proj');
+%vid = ncread(minian_ds_path, 'varr');
 
-
-[minian_ds_dir, ~, ~] = fileparts(minian_ds_path);
-
-savename = strcat(minian_ds_dir, "\minian_data_cnmf.mat");
+savename = strcat(minian_ds_path, "\minian_data_cnmf.mat");
 save(savename, 'Adata', 'Cdata', 'Sdata', 'bdata', 'fdata', 'max_proj')
-dff = Cdata;
-spkfn = Sdata;
 
-savename = strcat(minian_ds_dir, "\minian_data_processed_cnmf.mat");
 
-save(savename,"spkfn", "dff");
 
 %% 
 % format for CScreener
@@ -42,5 +35,5 @@ for i = 1:size(Adata,3)
     Atmp = fliplr(Atmp);
     ms.SFPs(:,:,i) = Atmp;
 end
-savename = strcat(minian_ds_dir, "\ms.mat");
+savename = strcat(minian_ds_path, "\ms.mat");
 save(savename,"ms", '-v7.3');

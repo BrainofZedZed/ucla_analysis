@@ -13,10 +13,10 @@ idir = dir;%('','Select the directory containing folders for analysis'); %Direct
 
     for j = 3:length(idir)
         cd(idir(j).name);
-        %a = dir;
-        %cd(a(3).name); % use this to go down another level of folders
-        %a = dir; % the following two for another level of folders
-        %cd(a(3).name);
+        a = dir;
+        cd(a(3).name); % use this to go down another level of folders
+        a = dir; % the following two for another level of folders
+        cd(a(3).name);
         cd('My_V4_Miniscope')
         mstbl = readmatrix('timeStamps.csv');
         mstbl = mstbl(2:end,:);
@@ -34,7 +34,6 @@ idir = dir;%('','Select the directory containing folders for analysis'); %Direct
              match(f) = ind;
         end
 
-        %disp(['Aligned timepoints for ' top_dir(i).name]);
     %% make a frame lookup (frlu) table, col1 is behavior frame, col2 is miniscope frame
     % make another version with the timestamp in there
         frlu = [];
@@ -45,6 +44,7 @@ idir = dir;%('','Select the directory containing folders for analysis'); %Direct
         save('frlu.mat','frlu');
         save('frtslu.mat', 'frtslu');
         
-        cd ../
-    
+        disp(['done with ' idir(j).name]);
+        cd(choice);
+        
 end

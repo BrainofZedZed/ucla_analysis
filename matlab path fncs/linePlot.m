@@ -16,6 +16,7 @@ function [varargout] = linePlot(zall, varargin)
 %       xlineNames  - (cell array) Names of xlines for the legend.
 %       align       - (binary) Whether to align rows by subtracting mean of the first xline.
 %       smooth_wnd  - (int) span for smoothing, 0 is no smoothing
+%       title       - (string) title for plot
 %
 % Outputs:
 %   fig - (figure handle) Figure handle of the plot.
