@@ -1,4 +1,4 @@
-plot_ind = 0; % true if plot cell index
+plot_ind = 1; % true if plot cell index
 
 blue = [0, 0.4470, 0.7410];
 orange = [0.8500, 0.3250, 0.0980];
