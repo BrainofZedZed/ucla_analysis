@@ -1,5 +1,5 @@
 % Define the grandparent directory and output directory
-grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL\CSminus removed\normal gcamp\ZZ208';
+grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed';
 output_dir = grandparent_dir;
 
 % Get list of subject directories
@@ -103,7 +103,7 @@ data.Properties.VariableNames = colNames;
 
 % Extract unique features and trials (after renaming)
 features = {'freeze', 'nontone_freeze', 'CSp', 'CSpOnset', 'CSpOffset', ...
-            'shock', 'post_shock'};
+            'tone_freeze', 'tone_nonfreeze', 'shock', 'post_shock'};
 trials = {'hab', 'D0', 'D1', 'D28'};
 
 % Initialize a new table to hold the reorganized data

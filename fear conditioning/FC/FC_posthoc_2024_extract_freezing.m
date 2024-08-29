@@ -1,6 +1,6 @@
 %% PARAMS TO EDIT
 % Set your base directory
-baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\TeNT\TRAP TeNT FC\cohort3\batch\D28'; % Replace with your directory path
+baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\TeNT\TRAP PL GTACR\gtacr_cohort3\batch\D1_D28'; % Replace with your directory path
 
 % set the output save name
 savefile = 'freezing_data.mat';
