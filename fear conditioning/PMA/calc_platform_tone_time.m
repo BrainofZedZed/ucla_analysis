@@ -1,6 +1,6 @@
 % Define the input (grandfather) directory
 inputDir = 'C:\Users\boba4\Box\Zach_repo\Projects\DA PMA\PMAR_JAWS\controls\cohort1\batch'; % Replace with your directory path
-
+outputName = 'platform_tone_output.mat';
 % Initialize the output cell matrix with a header row
 outputMatrix = {'exp_ID', 'all_platform_bouts', 'platform_bout_during_tone', 'platform_bouts_during_tone', ...
                 'duration_of_tone_platform_bouts', 'average_duration_tone_platform_bouts', ...
@@ -84,4 +84,4 @@ end
 % Display the output
 disp(outputMatrix);
 
-save(fullfile(inputDir, 'platform_data_20240415v2.mat'),'outputMatrix');
+save(fullfile(inputDir, outputName),'outputMatrix');
