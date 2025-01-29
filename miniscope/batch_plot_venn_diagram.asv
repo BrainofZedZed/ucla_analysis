@@ -1,12 +1,12 @@
-%grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL\CSminus removed\normal gcamp';
-grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed';
-session_id = 'D28';
+grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL\CSminus removed\normal gcamp';
+%grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed';
+session_id = 'D1';
 
 batch_venn_diagram(grandparent_dir, session_id)
 
 
 function batch_venn_diagram(grandparent_dir, session_id)
-    % Initialize counters
+    % Initialize counters for Venn diagrams
     total_csp_all = 0;
     total_freeze_all = 0;
     total_both_all = 0;
@@ -17,6 +17,16 @@ function batch_venn_diagram(grandparent_dir, session_id)
     total_freeze_suppressed = 0;
     total_both_suppressed = 0;
     total_neurons = 0;
+    
+    % Initialize variables for summary statistics
+    num_recordings = 0;
+    total_recorded_neurons = 0;
+    
+    % Create table to store summary data
+    summary_table = table('Size', [0, 9], ...
+        'VariableTypes', {'string', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'}, ...
+        'VariableNames', {'AnimalID', 'TotalNeurons', 'CSp', 'Freeze', 'Both', ...
+                         'CSp_Fraction', 'Freeze_Fraction', 'Both_Fraction', 'Recording_Fraction'});
     
     % Get list of animal directories
     animal_dirs = dir(grandparent_dir);
@@ -41,13 +51,33 @@ function batch_venn_diagram(grandparent_dir, session_id)
         end
         
         % Load the data
-        load(data_file, 'out');
+        load(data_file, 'out', 'sig');
+        
+        % Get number of neurons in recording from sig
+        num_neurons_in_recording = size(sig, 1);
+        total_recorded_neurons = total_recorded_neurons + num_neurons_in_recording;
+        num_recordings = num_recordings + 1;
         
         % Calculate modulated neurons for this session
         csp_all = unique([out.CSp.n_excited; out.CSp.n_suppressed]);
         freeze_all = unique([out.freeze.n_excited; out.freeze.n_suppressed]);
         both_all = intersect(csp_all, freeze_all);
         
+        % Update summary table
+        new_row = table(string(animal_id), ...
+                       num_neurons_in_recording, ...
+                       length(csp_all), ...
+                       length(freeze_all), ...
+                       length(both_all), ...
+                       length(csp_all)/num_neurons_in_recording, ...
+                       length(freeze_all)/num_neurons_in_recording, ...
+                       length(both_all)/num_neurons_in_recording, ...
+                       1.0, ...
+                       'VariableNames', {'AnimalID', 'TotalNeurons', 'CSp', 'Freeze', 'Both', ...
+                                       'CSp_Fraction', 'Freeze_Fraction', 'Both_Fraction', 'Recording_Fraction'});
+        summary_table = [summary_table; new_row];
+        
+        % Update counters for Venn diagrams
         csp_excited = out.CSp.n_excited;
         freeze_excited = out.freeze.n_excited;
         both_excited = intersect(csp_excited, freeze_excited);
@@ -56,7 +86,6 @@ function batch_venn_diagram(grandparent_dir, session_id)
         freeze_suppressed = out.freeze.n_suppressed;
         both_suppressed = intersect(csp_suppressed, freeze_suppressed);
         
-        % Update total counters
         total_csp_all = total_csp_all + length(csp_all);
         total_freeze_all = total_freeze_all + length(freeze_all);
         total_both_all = total_both_all + length(both_all);
@@ -69,13 +98,33 @@ function batch_venn_diagram(grandparent_dir, session_id)
         total_freeze_suppressed = total_freeze_suppressed + length(freeze_suppressed);
         total_both_suppressed = total_both_suppressed + length(both_suppressed);
         
-        total_neurons = total_neurons + length(unique([csp_all; freeze_all]));
-        
         fprintf('Processed animal %s, session %s\n', animal_id, session_id);
     end
     
-    % Create figure with 3 subplots
-    figure('Position', [100, 100, 1200, 400]);
+    % Calculate summary statistics across all recordings
+    summary_stats = struct();
+    summary_stats.total_recorded_neurons = total_recorded_neurons;
+    summary_stats.mean_neurons_per_recording = total_recorded_neurons / num_recordings;
+    summary_stats.mean_csp_fraction = mean(summary_table.CSp_Fraction);
+    summary_stats.mean_freeze_fraction = mean(summary_table.Freeze_Fraction);
+    summary_stats.mean_both_fraction = mean(summary_table.Both_Fraction);
+    
+    % Add summary row to table
+    summary_row = table("TOTAL", ...
+                       total_recorded_neurons, ...
+                       sum(summary_table.CSp), ...
+                       sum(summary_table.Freeze), ...
+                       sum(summary_table.Both), ...
+                       sum(summary_table.CSp)/total_recorded_neurons, ...
+                       sum(summary_table.Freeze)/total_recorded_neurons, ...
+                       sum(summary_table.Both)/total_recorded_neurons, ...
+                       num_recordings, ...
+                       'VariableNames', {'AnimalID', 'TotalNeurons', 'CSp', 'Freeze', 'Both', ...
+                                       'CSp_Fraction', 'Freeze_Fraction', 'Both_Fraction', 'Recording_Fraction'});
+    summary_table = [summary_table; summary_row];
+    
+    % Create figure with 3 subplots for Venn diagrams
+    figure('Position', [100, 100, 1800, 600]);
     
     % 1. All modulated neurons
     subplot(1, 3, 1);
@@ -92,9 +141,27 @@ function batch_venn_diagram(grandparent_dir, session_id)
     % Add overall title
     sgtitle(sprintf('Neuron Modulation Analysis - Session: %s', session_id), 'FontSize', 16);
     
-    % Print overall total neurons
-    fprintf('\nTotal neurons across all categories: %d\n', total_neurons);
+    % Display summary table
+    fprintf('\nSummary Table:\n');
+    disp(summary_table);
+    
+    % Display summary statistics
+    fprintf('\nSummary Statistics:\n');
+    fprintf('Total recorded neurons: %d\n', summary_stats.total_recorded_neurons);
+    fprintf('Mean neurons per recording: %.1f\n', summary_stats.mean_neurons_per_recording);
+    fprintf('Mean fraction modulated by CSp: %.3f\n', summary_stats.mean_csp_fraction);
+    fprintf('Mean fraction modulated by Freeze: %.3f\n', summary_stats.mean_freeze_fraction);
+    fprintf('Mean fraction modulated by both: %.3f\n', summary_stats.mean_both_fraction);
+    
+    % Save results to a file
+    results_filename = sprintf('analysis_results_%s.mat', session_id);
+    save(results_filename, 'summary_table', 'summary_stats');
+    
+    % Also save table to CSV
+    csv_filename = sprintf('summary_table_%s.csv', session_id);
+    writetable(summary_table, csv_filename);
 end
+
 
 function plot_venn(n_csp, n_freeze, n_overlap, subtitle_text)
     % Calculate total neurons for this specific Venn diagram

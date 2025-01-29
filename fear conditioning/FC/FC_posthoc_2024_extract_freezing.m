@@ -1,6 +1,6 @@
 %% PARAMS TO EDIT
 % Set your base directory
-baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\SEFL remote memory\pilot_tonehab_September2024\PL-BLA\d28_extinction_recall\D28_recall'; % Replace with your directory path
+baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed\ZZ087'; % Replace with your directory path
 
 % set the output save name
 savefile = 'freezing_data.mat';
