@@ -1,15 +1,17 @@
 % Define the parent directory containing all animal IDs
-parent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed'; % Replace with actual path
+parent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed\ZZ186'; % Replace with actual path
 
 % Get all subdirectories (animal IDs)
 animal_dirs = dir(fullfile(parent_dir, 'ZZ*'));
 
 for i_animal = 1:length(animal_dirs)
-    animal_path = fullfile(parent_dir, animal_dirs(i_animal).name);
-    
+    animal_path_all = fullfile(parent_dir, animal_dirs(i_animal).name);
+    animal_path = all_items([all_items.isdir]);
+
     % Get all session directories for this animal
-    session_dirs = dir(fullfile(animal_path, 'ZZ*'));
-    
+    all_items = dir(fullfile(animal_path, 'ZZ*'));
+    session_dirs = all_items([all_items.isdir]);
+
     for i_session = 1:length(session_dirs)
         session_path = fullfile(animal_path, session_dirs(i_session).name);
         
@@ -17,28 +19,48 @@ for i_animal = 1:length(animal_dirs)
         if exist(fullfile(session_path, 'ca_roc_output.mat'), 'file')
             disp(['Processing: ', fullfile(session_path, 'ca_roc_output.mat')]);
             
-            % Load the data
+            % Load the ca_roc_output.mat data
             load(fullfile(session_path, 'ca_roc_output.mat'));
             
-            % Save a copy of the original data
-            save(fullfile(session_path, 'ca_roc_output_orig.mat'), '-v7.3');
+            % Save a copy of the original data with new filename
+            save(fullfile(session_path, 'ca_roc_output_og_v2.mat'), '-v7.3');
             
-            tone_freeze_vec = csp_vec + freeze_vec;
-            tone_freeze_vec(tone_freeze_vec<2) = 0;
-            tone_freeze_vec(tone_freeze_vec==2) = 1;
-
-            tone_nonfreeze_vec = csp_vec - freeze_vec;
-            tone_nonfreeze_vec(tone_nonfreeze_vec < 1) = 0;
+            % Find and load Behavior.mat from the _analyzed subdirectory
+            analyzed_dirs = dir(fullfile(session_path, '*_analyzed'));
+            if ~isempty(analyzed_dirs)
+                behavior_path = fullfile(session_path, analyzed_dirs(1).name, 'Behavior.mat');
+                if exist(behavior_path, 'file')
+                    load(behavior_path, 'Behavior');
+                    % Override freezing_vec with Behavior.Freezing.Vector
+                    freeze_vec = Behavior.Freezing.Vector;
+                else
+                    warning(['Behavior.mat not found in: ', behavior_path]);
+                    continue;
+                end
+            else
+                warning(['No _analyzed directory found in: ', session_path]);
+                continue;
+            end
+            
+            % Calculate vectors
+            tone_freeze_vec = csp_vec & freeze_vec;  % Freezing during tone
+            tone_nonfreeze_vec = csp_vec & ~freeze_vec;  % Non-freezing during tone
+            nontone_freeze_vec = ~csp_vec & freeze_vec;  % Freezing outside tone
+            
+            if exist('cutoff','var') && cutoff == 0
+                cutoff = length(sig);
+            end
 
             if exist('cutoff', 'var') && cutoff > 0
                 tone_freeze_vec = tone_freeze_vec(1:cutoff);
                 tone_nonfreeze_vec = tone_nonfreeze_vec(1:cutoff);
+                nontone_freeze_vec = nontone_freeze_vec(1:cutoff);
             end
     
-            new_event_vecs = [tone_freeze_vec; tone_nonfreeze_vec];
-            new_event_vec_names = {'tone_freeze', 'tone_nonfreeze'};
-            event_vectors = [event_vectors; tone_freeze_vec; tone_nonfreeze_vec];
-            event_vec_names = [event_vec_names, "tone_freeze", "tone_nonfreeze"];
+            new_event_vecs = [tone_freeze_vec; tone_nonfreeze_vec; nontone_freeze_vec];
+            new_event_vec_names = {'tone_freeze', 'tone_nonfreeze', 'nontone_freeze'};
+            event_vectors = [event_vectors; tone_freeze_vec; tone_nonfreeze_vec; nontone_freeze_vec];
+            event_vec_names = [event_vec_names, "tone_freeze", "tone_nonfreeze", "nontone_freeze"];
 
             zsig = zscore(sig, 0, 2);  % zscore data to normalize
             nn = size(zsig,1);  % Number of Neurons
@@ -108,7 +130,7 @@ for i_animal = 1:length(animal_dirs)
             end
 
             % Save the results back to the same file
-            save(fullfile(session_path, 'ca_roc_output.mat'), "out", "tone_freeze_vec", "tone_nonfreeze_vec", "event_vectors", "event_vec_names", '-append');
+            save(fullfile(session_path, 'ca_roc_output.mat'), "out", "tone_freeze_vec", "tone_nonfreeze_vec", "nontone_freeze_vec", "event_vectors", "event_vec_names", '-append');
             
             disp(['Finished processing: ', fullfile(session_path, 'ca_roc_output.mat')]);
             
