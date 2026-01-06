@@ -13,7 +13,7 @@ xdim = Params.Video.frameWidth; % x-dimension of video (pixel)
 ydim = Params.Video.frameHeight; % y-dimension of video (pixel)
 
 % ADJUST THIS LINE TO POINT TOWARD TONE EVENT BOUTS OF INTEREST
-tonetimes = Behavior_Filter.Temporal.CSp.EventBouts;
+tonetimes = Behavior.Temporal.CSp.EventBouts;
 
 %tonetimes = tonetimes(4:end,:);  % edit to exclude certain tones (eg (4,:end,:) to include only 4th tone through end
 

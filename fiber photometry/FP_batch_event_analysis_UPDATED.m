@@ -22,15 +22,15 @@ clear;
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 P2.fp_ds_factor = 10; % factor by which to downsample FP recording (eg 10 indicates 1:10:end)
-P2.trange_peri_bout = [5 5]; % [sec_before, sec_after] event to visualize, containing of baseline period
-P2.baseline_per = [1 0.1]; % [sec_earlier, sec_later] period relative to before epoc onset for normalizing
+P2.trange_peri_bout = [10 5]; % [sec_before, sec_after] event to visualize, containing of baseline period
+P2.baseline_per = [5 0.1]; % [sec_earlier, sec_later] period relative to before epoc onset for normalizing
 
-P2.remove_last_trials = 1; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
-P2.t0_as_zero = false; % true to set signal values at t0 (tone onset) as 0
+P2.remove_last_trials = 0; % true if remove last trial from analysis (helpful for looking at dynamics long after cues end)
+P2.t0_as_zero = true; % true to set signal values at t0 (tone onset) as 0
 P2.reward_t = 5; % (seconds) time after reward initiation to visualize signal
-P2.peakWnd = [0 3]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire tone
+P2.peakWnd = [0 2]; % (seconds, seconds) 1x2 vector denoting window within epoc to look for peak, relative to epoc onset. empty defaults to entire epoc
+P2.aucWnd = []; % (seconds, seconds) 1x2 vector denoting window within epoc for AUC calcuation, relative to epoc onset. empty defaults to entire epoc
 
-P2.pc_name = 'PC0_';
 bouts_name = 'CSp'; % char name of bouts (for labeling and saving)(must be exactly as in BehDEPOT)
 
 P2.skip_prev_analysis = false; % true if skip over previous analysis
@@ -45,7 +45,7 @@ P2.cleanbeh2fp = true; % true if hardcode fix poor behavior and photometry align
 P2.do_lineplot = true;
 P2.do_heatmap = true;
 P2.do_peak = true;
-P2.do_auc = false;
+P2.do_auc = true;
 
 % PMA specific analyses
 P2.do_platform = 0;
@@ -54,13 +54,6 @@ P2.do_platform_reward_tone_intersect = 0;
 P2.remove_nonshock_tones = 0; % applies only to vector plot for PMA, removes first three tones from visualization 
 P2.do_shock_discover = false;
 
-
-%% REGISTER TDT TTL AND BEHDEPOT CUE NAME
-% identify PC trigger names with BehDEPOT events as 1x2 cell. first is name
-% of TDT input (eg PC0_, PC2_, PC3_, etc) and second is name of BehDEPOT
-% event (eg 'tone', 'CSp')
-% NB: these must be the exact names and spelling of
-P2.cue = {'PC0_', 'CSp'};
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -88,14 +81,18 @@ end
 %% initialize vars
 ct = 0;
 auc_fc_abs = {};
-auc_names_fc = {'ID','0-10s auc', '10-20s auc', '20-30s auc', '0-30s auc', '7-12s auc (shock)'};
+auc_fc_ind_abs = {};
+auc_fc_ind = {};
+auc_fc_avg_signed = {};
+auc_names_fc = {'ID', 'AUC (Custom Window)'};
 peaks = {};
 peak_names = {'ID','peak value', 'latency'};
+P2.animal_dirs = struct();
 
 %% loop through folders
 for j = 1:length(P2.video_folder_list)
     % clear from previous round
-    clearvars -except 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs' 'bouts_name';
+    clearvars -except 'BATCH_DATA' 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs' 'auc_fc_avg_signed' 'bouts_name';
     % Initialize 
     ct = ct+1; % increase count
     current_video = P2.video_folder_list(j);  
@@ -122,11 +119,9 @@ for j = 1:length(P2.video_folder_list)
 
 
     bouts = Behavior.Temporal.(bouts_name).Bouts;
+    P2.bouts_name = 'CSp';
 
-    % moved into calcSignalEpoc fxn 20240722
-   % if P2.remove_last_trials
-   %     bouts = bouts(1:end-1,:);
-   % end
+  
 
     %% load stuff from current folder
     basedir = pwd;
@@ -142,6 +137,10 @@ for j = 1:length(P2.video_folder_list)
     numFrames = Params.numFrames;
     fps = Params.Video.frameRate;
 
+      % Track directory info for group plotting later
+    P2.animal_dirs(ct).id = P2.exp_ID;
+    P2.animal_dirs(ct).path = basedir;
+
     %%%%%%%%%%%%%%%%%%%%%%%%
     %% DO ANALYSIS
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -150,7 +149,7 @@ for j = 1:length(P2.video_folder_list)
     [data, s405, s465, sig] = cleanFPData(basedir,P2);
 
     %% create frame lookup translating FP to behavior frames
-    beh2fp = beh2FPfrlu(cueframes, data, P2.cue, numFrames, P2);
+    beh2fp = beh2FPfrlu(cueframes, data, numFrames, P2);
 
     if P2.cleanbeh2fp && (~isempty(find(beh2fp<0)) || ~isempty(find(beh2fp>length(sig)))) 
         beh2fp(beh2fp<1) = 1;
@@ -183,7 +182,12 @@ for j = 1:length(P2.video_folder_list)
     end
     %% calculate AUC of epoc signals
     if P2.do_auc
-        [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct);
+        [row_abs, row_ind_abs, row_ind, row_avg_signed] = calcAUC(P2, zall);
+        % Append the new rows to the master lists
+        auc_fc_abs(ct, :)     = row_abs;
+        auc_fc_ind_abs(ct, :) = row_ind_abs;
+        auc_fc_ind(ct, :)     = row_ind;  
+        auc_fc_avg_signed(ct, :) = row_avg_signed;
     else
         auc_fc_abs = [];
         auc_fc_ind_abs = [];
@@ -291,9 +295,163 @@ for j = 1:length(P2.video_folder_list)
         if P2.save_analysis
           save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'i_peak', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit');
         end
+    
 end
 
- %save compiled data
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% GROUP PLOTTING VIA DYNAMIC FIG STITCHING
+%% Automatically detects ALL plot types generated and groups them
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if isfield(P2, 'animal_dirs') && ~isempty(P2.animal_dirs)
+    
+    % Ensure we are in the main batch directory for saving group plots
+    if ~exist(P2.video_directory, 'dir')
+        mkdir(P2.video_directory);
+    end
+    cd(string(P2.video_directory));
+
+    disp('Scanning animal folders for plot types...');
+
+    %% 1. DYNAMICALLY DISCOVER PLOT TYPES
+    % ---------------------------------------------------------
+    detected_suffixes = {};
+    
+    for k = 1:length(P2.animal_dirs)
+        curr_path = P2.animal_dirs(k).path;
+        curr_id   = P2.animal_dirs(k).id;
+        
+        % Find all .fig files in this animal's directory
+        f_list = dir(fullfile(curr_path, '*.fig'));
+        
+        for f = 1:length(f_list)
+            f_name = f_list(f).name;
+            
+            % Only process files that actually belong to this animal
+            if contains(f_name, curr_id)
+                % Strip the Animal ID from the filename to get the "Plot Type"
+                % Example: 'm25_Tone_HeatMap.fig' -> '_Tone_HeatMap.fig'
+                % We use regexprep to replace the ID (case insensitive) with nothing
+                suffix = regexprep(f_name, curr_id, '', 'ignorecase');
+                
+                % Store this suffix
+                detected_suffixes{end+1} = suffix; %#ok<AGROW>
+            end
+        end
+    end
+    
+    % Get the unique list of all plot types found across all animals
+    plot_suffixes = unique(detected_suffixes);
+    
+    if isempty(plot_suffixes)
+        disp('No .fig files found to group.');
+    else
+        fprintf('Found %d unique plot types. Generating summaries...\n', length(plot_suffixes));
+    end
+
+
+    %% 2. GENERATE GROUP PLOTS
+    % ---------------------------------------------------------
+    num_animals = length(P2.animal_dirs);
+    grid_rows = floor(sqrt(num_animals));
+    grid_cols = ceil(num_animals / grid_rows);
+
+    for p = 1:length(plot_suffixes)
+        suffix = plot_suffixes{p};
+        
+        % A. Prepare Master Figure (Invisible)
+        master_fig = figure('Visible', 'off', 'Color', 'w', 'Position', [100 100 1200 900]);
+        plots_found_for_suffix = false;
+
+        % B. Loop through animals to find matching plot
+        for k = 1:num_animals
+            curr_path = P2.animal_dirs(k).path;
+            curr_id   = P2.animal_dirs(k).id;
+            
+            % Reconstruct the expected filename: ID + Suffix
+            % Note: We search for files ending in the suffix to be robust
+            search_pattern = fullfile(curr_path, ['*' suffix]);
+            found_files = dir(search_pattern);
+            
+            % Filter to ensure the file belongs to this animal (contains ID)
+            target_file = '';
+            for ff = 1:length(found_files)
+                if contains(found_files(ff).name, curr_id)
+                    target_file = fullfile(found_files(ff).folder, found_files(ff).name);
+                    break; % Use the first match
+                end
+            end
+            
+            if ~isempty(target_file)
+                plots_found_for_suffix = true;
+                
+                % --- CORRECTED: Use openfig with invisible flag ---
+                src_fig = openfig(target_file, 'invisible');
+                
+                % Find the main axes (exclude legends/colorbars if possible)
+                all_axes = findobj(src_fig, 'type', 'axes');
+                
+                % Filter out Legend or Colorbar axes usually tagged 'Tag'
+                src_ax = [];
+                for ax_i = 1:length(all_axes)
+                    if ~strcmpi(all_axes(ax_i).Tag, 'legend') && ...
+                       ~strcmpi(all_axes(ax_i).Tag, 'Colorbar')
+                        src_ax = all_axes(ax_i);
+                        break; % Take the first valid plotting axes
+                    end
+                end
+                
+                if ~isempty(src_ax)
+                    % Create target subplot
+                    figure(master_fig);
+                    target_subplot = subplot(grid_rows, grid_cols, k);
+                    
+                    % Copy contents
+                    copyobj(src_ax.Children, target_subplot);
+                    
+                    % Copy formatting
+                    title(target_subplot, curr_id, 'Interpreter', 'none', 'FontSize', 8);
+                    try xlabel(target_subplot, src_ax.XLabel.String); catch; end
+                    try ylabel(target_subplot, src_ax.YLabel.String); catch; end
+                    xlim(target_subplot, src_ax.XLim);
+                    ylim(target_subplot, src_ax.YLim);
+                    if ~isempty(src_ax.Colormap); colormap(target_subplot, src_ax.Colormap); end
+                    if strcmp(src_ax.YDir, 'reverse'); set(target_subplot, 'YDir', 'reverse'); end
+                    
+                    legend(target_subplot, 'off'); % Clean up legends
+                end
+                close(src_fig);
+            end
+        end
+        
+        % C. Save Master Figure
+        if plots_found_for_suffix
+            % Clean up title
+            clean_title = strrep(suffix, '_', ' ');
+            clean_title = strrep(clean_title, '.fig', '');
+            if startsWith(clean_title, ' '); clean_title = clean_title(2:end); end
+            
+            sgtitle(master_fig, ['Batch Summary: ' clean_title]);
+            
+            % Save as .fig in the MAIN video_directory
+            save_name = ['GROUP_SUMMARY_' suffix];
+            % Ensure the save name ends in .fig
+            if ~endsWith(save_name, '.fig'); save_name = [save_name '.fig']; end
+            
+            full_save_path = fullfile(P2.video_directory, save_name);
+            
+            saveas(master_fig, full_save_path);
+            fprintf('Saved: %s\n', save_name);
+        end
+        close(master_fig);
+    end
+    disp('All dynamic group plots completed.');
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%save compiled data
     cd(string(P2.video_directory));
     
     % make params struct for records
@@ -336,7 +494,7 @@ end
     end
     
     if P2.save_analysis
-        save(['fibpho_analysis_' bouts_name '.mat'], 'auc_fc_ind', 'auc_fc_ind_abs', 'auc_fc_abs', 'auc_names_fc', 'peaks', 'peaks_shock_all', 'peaks_nonshock_all', 'peak_names', 'Params', 'auc_shock_all', 'auc_shock_names', 'auc_nonshock_all', 'auc_baseline_all', 'peaks_baseline_all');
+        save(['fibpho_analysis_' bouts_name '.mat'], 'auc_fc_ind', 'auc_fc_ind_abs', 'auc_fc_abs', 'auc_fc_avg_signed', 'auc_names_fc', 'peaks', 'peaks_shock_all', 'peaks_nonshock_all', 'peak_names', 'Params', 'auc_shock_all', 'auc_shock_names', 'auc_nonshock_all', 'auc_baseline_all', 'peaks_baseline_all');
     end
 
         
@@ -382,19 +540,40 @@ function [data, s405, s465, sig] = cleanFPData(basedir,P2)
         s465 = s465(1:length(s405));
         disp('465 and 405 channels have different lengths. matching shorter length');
     end
+
+    % correct initialization
+    mean405 = mean(s405(500:end));
+    mean465 = mean(s465(500:end));
+    s405(1:500) = mean405;
+    s465(1:500) = mean465;
+
+    %center 
+    mean_405 = mean(s405);
+    mean_465 = mean(s465);
+    s405_centered = s405 - mean_405;
+    s465_centered = s465 - mean_465;
+
     % Fitting 405 channel onto 465 channel to detrend signal bleaching
-    % Algorithm sourced from Tom Davidson's Github:
-    % https://github.com/tjd2002/tjd-shared-code/blob/master/matlab/photometry/FP_normalize.m
-    bls_all = polyfit(s405(1:end), s465(1:end), 1);
-    Y_fit_all = bls_all(1) .* s405 + bls_all(2);
-    sig = s465 - Y_fit_all;
-    %sig = s465; % TEST LINE ADDED BY ZACH TO PLAY WITH JUST 465 SIGNAL
+    %alternate robust fit method
+    b = robustfit(s405_centered, s465_centered);
+
+    % Calculate the fit: Intercept + Slope * x
+    Y_fit_all = b(1) + b(2) * s405_centered(:);
+
+    % Transpose back to row if necessary
+    Y_fit_all = Y_fit_all'; 
+    sig = s465_centered - Y_fit_all;
+
+    % %% testing old method
+    % bls_all = polyfit(s405(1:end), s465(1:end), 1);
+    % Y_fit_all = bls_all(1) .* s405 + bls_all(2);
+    % sig = s465 - Y_fit_all;
     
 end
 
 %%
 
-function beh2fp = beh2FPfrlu(cueframes_in, TDTdata, cue, numFrames, P2)
+function beh2fp = beh2FPfrlu(cueframes_in, TDTdata, numFrames, P2)
 % GOAL: Create a frame lookup table to translate fiber photometry frames
 % to Behavior frames (using Fear Conditioning Experiment Designer and 
 % BehDEPOT output). 
@@ -404,8 +583,38 @@ function beh2fp = beh2FPfrlu(cueframes_in, TDTdata, cue, numFrames, P2)
 % behavior frames. Example:  beh2fp(1) = N, where 1 is behavior frame 1
 % which corresponds to FP frame N
 
-% get cueframes from experiment file and PC0 timing from TDT
+%instantiate empty cue
+cue = {'',P2.bouts_name};
+
+% automatically find the right PC for TDT recording
+candidate_cues = {'PC0_', 'PC1_', 'PC2_', 'PC3_'};
+found_match = false;
+
+% Loop through the candidates
+for k = 1:length(candidate_cues)
+    current_field = candidate_cues{k};
+    
+    % Check if the field exists in the structure
+    if isfield(TDTdata.epocs, current_field)
+        % Perform the assignment
+        fp.pc_times = [TDTdata.epocs.(current_field).onset, TDTdata.epocs.(current_field).offset];
+        
+        % Update cue{1} to match TDT PC channel
+        cue{1} = current_field;
+        
+        found_match = true;
+        break; % Exit the loop immediately once successful
+    end
+end
+
+% get cueframes from experiment file and PC timing from TDT
 cueframes = cueframes_in.(cue{2});
+
+% Handle the case where ALL attempts failed
+if ~found_match
+    error('Could not find original cue or any backup PC fields (PC0_-PC3_) in TDTdata.epocs');
+end
+
 fp.pc_times = [TDTdata.epocs.(cue{1}).onset, TDTdata.epocs.(cue{1}).offset]; 
 
 %hardcode to remove erroneous cues in TDT data
@@ -524,6 +733,11 @@ end
 
 function i_peak = calcPeaks(P2, zall, peakWnd)        
     t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
+    
+    if P2.t0_as_zero
+        zall = zall - zall(:, t0);
+    end
+
     if isempty(peakWnd)
         z = zall;
     else
@@ -541,88 +755,79 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [auc_fc_abs, auc_fc_ind_abs, auc_fc_ind] = calcAUC(P2, zall, ct)
-    t0 = round(P2.trange_peri_bout(1)*P2.beh_fps);
-    meanz = mean(zall);
-    auc_offset = mean(meanz(1:t0));
-    meanz = meanz-auc_offset;
-    auc_fc_abs{ct,1} = P2.exp_ID;
-    auc_fc_abs{ct,2} = trapz(abs(meanz(t0:t0+(round(10*P2.beh_fps)))));
-
-    try
-        auc_fc_abs{ct,3} = trapz(abs(meanz(t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps))));
-    catch
-        auc_fc_abs{ct,3} = '';
+function [row_abs, row_ind_abs, row_ind, row_avg_signed] = calcAUC(P2, zall)
+    % 1. Determine Time Indices
+    % ---------------------------------------------------------
+    t0 = round(P2.trange_peri_bout(1) * P2.beh_fps);
+    
+    if isempty(P2.aucWnd)
+        % Default: Tone Duration
+        idx_start = t0;
+        if isfield(P2, 'tone_dur') && ~isempty(P2.tone_dur)
+            idx_end = t0 + round(P2.tone_dur * P2.beh_fps);
+        else
+            idx_end = size(zall, 2) - round(P2.post_dur * P2.beh_fps);
+        end
+    else
+        % Custom Window relative to t0
+        idx_start = t0 + round(P2.aucWnd(1) * P2.beh_fps);
+        idx_end   = t0 + round(P2.aucWnd(2) * P2.beh_fps);
     end
 
-    try
-        auc_fc_abs{ct,4} = trapz(abs(meanz(t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps))));
-    catch
-        auc_fc_abs{ct,4} = '';
+    % Safety clamp indices
+    idx_start = max(1, idx_start);
+    idx_end   = min(size(zall, 2), idx_end);
+
+    % 2. Baseline Correction (Vectorized)
+    % ---------------------------------------------------------
+    meanz = mean(zall, 1, 'omitnan'); 
+
+    if P2.t0_as_zero
+        % Vectorized subtraction: Subtract t0 column from all columns
+        zall  = zall - zall(:, t0);
+        meanz = meanz - meanz(t0); 
+    else
+        % Standard baseline subtraction (average of pre-t0) for the mean trace
+        auc_offset = mean(meanz(1:t0));
+        meanz = meanz - auc_offset;
     end
-
+    
+    % 3. Calculate AUCs and Package into Rows
+    % ---------------------------------------------------------
+    
+    %% A. Mean Absolute AUC (row_abs) - Uses Average Trace + Abs
     try
-        auc_fc_abs{ct,5} = trapz(abs(meanz(t0:t0+round(30*P2.beh_fps))));
+        val_abs = trapz(abs(meanz(idx_start:idx_end)));
     catch
-        auc_fc_abs{ct,5} = '';
+        val_abs = NaN;
     end
+    row_abs = {P2.exp_ID, val_abs};
 
-
-    % AUC calculated over indiviudual trials, abs
-    auc_fc_ind_abs{ct,1} = P2.exp_ID;
-    auc_fc_ind_abs{ct,2} = trapz(abs(zall(:,t0:t0+(round(10*P2.beh_fps)))),2);
-    auc_fc_ind_abs{ct,2} = mean(auc_fc_ind_abs{ct,2});
-
+    %% B. Individual Trial Absolute AUC (row_ind_abs) - Uses Individual Traces + Abs
     try
-        auc_fc_ind_abs{ct,3} = trapz(abs(zall(:,t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps))),2);
-        auc_fc_ind_abs{ct,3} = mean(auc_fc_ind_abs{ct,3});
-
+        trial_vals_abs = trapz(abs(zall(:, idx_start:idx_end)), 2);
+        val_ind_abs = mean(trial_vals_abs, 'omitnan');
     catch
-        auc_fc_ind_abs{ct,3} = '';
+        val_ind_abs = NaN;
     end
+    row_ind_abs = {P2.exp_ID, val_ind_abs};
 
+    %% C. Individual Trial Signed AUC (row_ind) - Uses Individual Traces + Signed
     try
-        auc_fc_ind_abs{ct,4} = trapz(abs(zall(:,t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps))),2);
-        auc_fc_ind_abs{ct,4} = mean(auc_fc_ind_abs{ct,4});
-
+        trial_vals_signed = trapz(zall(:, idx_start:idx_end), 2);
+        val_ind = mean(trial_vals_signed, 'omitnan');
     catch
-        auc_fc_ind_abs{ct,4} = '';
+        val_ind = NaN;
     end
+    row_ind = {P2.exp_ID, val_ind};
 
+    %% D. Average Trace Signed AUC (row_avg_signed) - Uses Average Trace + Signed
     try
-        auc_fc_ind_abs{ct,5} = trapz(abs(zall(:,t0:t0+round(30*P2.beh_fps))),2);
-        auc_fc_ind_abs{ct,5} = mean(auc_fc_ind_abs{ct,5});
+        val_avg_signed = trapz(meanz(idx_start:idx_end));
     catch
-        auc_fc_ind_abs{ct,5} = '';
+        val_avg_signed = NaN;
     end
-
-   % AUC calculated over indiviudual trials, not abs
-    auc_fc_ind{ct,1} = P2.exp_ID;
-    auc_fc_ind{ct,2} = trapz(zall(:,t0:t0+(round(10*P2.beh_fps))),2);
-    auc_fc_ind{ct,2} = mean(auc_fc_ind{ct,2});
-
-    try
-        auc_fc_ind{ct,3} = trapz(zall(:,t0+round(10*P2.beh_fps):t0+round(20*P2.beh_fps)),2);
-        auc_fc_ind{ct,3} = mean(auc_fc_ind{ct,3});
-
-    catch
-        auc_fc_ind{ct,3} = '';
-    end
-
-    try
-        auc_fc_ind{ct,4} = trapz(zall(:,t0+round(20*P2.beh_fps):t0+round(30*P2.beh_fps)),2);
-        auc_fc_ind{ct,4} = mean(auc_fc_ind{ct,4});
-
-    catch
-        auc_fc_ind{ct,4} = '';
-    end
-
-    try
-        auc_fc_ind{ct,5} = trapz(zall(:,t0:t0+round(30*P2.beh_fps)),2);
-        auc_fc_ind{ct,5} = mean(auc_fc_ind{ct,5});
-    catch
-        auc_fc_ind{ct,5} = '';
-    end         
+    row_avg_signed = {P2.exp_ID, val_avg_signed};
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -660,6 +865,7 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     %zall_offset = zall_offset - mean(zall_offset(1:250));
     for i = 1:size(zall,1)
         zall_offset(i,:) = zall(i,:) - mean(zall(i,P2.pre_dur-(P2.beh_fps*P2.baseline_per(1)):P2.pre_dur-(P2.beh_fps*P2.baseline_per(2))));
+        zall_offset_zero(i,:) = zall(i,:) - zall(i,P2.pre_dur);
     end
     mean_zall = mean(zall_offset);
     std_zall = std(double(zall_offset))/sqrt(size(zall_offset,1));
@@ -735,6 +941,76 @@ function go_lineplot(zall, bouts_name, vertLines, P2)
     saveas(fig, filename);
     close;
     clear fig;
+
+    % do same, with each trial plotted individually and t0 as zero
+    if P2.t0_as_zero
+        fig = figure;
+        plot(zall_offset_zero');
+        % Plot vertical line at epoch onset, time = 0
+        for i = 1:length(vertLines)
+            xline(vertLines(i), ':', 'LineWidth', 2);
+        end
+        %labels
+        num_t = size(zall,1);
+        leg = {};
+        for i = 1:num_t
+            i_t = ['trial ' num2str(i)];
+            leg = [leg {i_t}];
+        end
+        leg = [leg {'tone on'} {'tone off'}];
+        legend(leg)
+        n1 = sprintf('%s%s', P2.exp_ID);
+        n2 = sprintf('%s%s', bouts_name);
+        n3 = sprintf('%d', size(zall,1));
+        ttl = [n1 ' average ' n2 ' response, ' n3 ' Trials'];
+        title (ttl);
+        xlabel(sprintf('frames (@ %d frames per second)', round(P2.beh_fps)));
+        ylabel('zscore')
+        axis tight
+        %save
+         filename = sprintf(['%s%s' '_' '%s%s'], P2.exp_ID, bouts_name);
+        filename = [filename 'LinePlot_IndvLines_zeroed'];
+        filename = [P2.basedir '\' filename];
+        saveas(fig, filename);
+        close;
+        clear fig;
+
+         % plot mean and sem
+        fig = figure;
+        y = mean(zall_offset_zero);
+        x = 1:numel(y);
+        curve1 = y + sem_zall;
+        curve2 = y - sem_zall;
+        x2 = [x, fliplr(x)];
+        inBetween = [curve1, fliplr(curve2)];
+        h = fill(x2, inBetween, 'r');
+        set(h, 'facealpha', 0.25, 'edgecolor', 'none');
+        hold on;
+        plot(x, y, 'r', 'LineWidth', 2);
+    
+        % Plot vertical line at epoch onset, time = 0
+        for i = 1:length(vertLines)
+            xline(vertLines(i), ':', 'LineWidth', 2);
+        end
+    
+        %labels
+        n1 = sprintf('%s%s', P2.exp_ID);
+        n2 = sprintf('%s%s', bouts_name);
+        n3 = sprintf('%d', size(zall,1));
+        ttl = [n1 ' average ' n2 ' response with SEM, ' n3 ' Trials'];
+        title (ttl);
+        xlabel(sprintf('frames (@ %d frames per second)', round(P2.beh_fps)));
+        ylabel('zscore')
+        axis tight
+    
+        %save
+        filename = sprintf(['%s%s' '_' '%s%s'], P2.exp_ID, bouts_name);
+        filename = [filename 'LinePlot_zeroed'];
+        filename = [P2.basedir '\' filename];
+        saveas(fig, filename);
+        close;
+        clear fig;
+    end
  end
 
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

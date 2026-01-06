@@ -1,6 +1,6 @@
 % Define the grandparent directory
-do_plots = true;
-grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL\CSminus removed\normal gcamp';
+do_plots = false;
+grandparent_dir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\CSminus removed';
 
 % Get list of parent directories
 parent_dirs = dir(grandparent_dir);
@@ -241,84 +241,3 @@ if do_plots
     savefig('modulation_across_days.fig');
     print('modulation_across_days', '-dpdf', '-bestfit');
 end
-
-
-% Statistical analysis
-fprintf('\nStatistical Analysis (Paired t-tests):\n');
-fprintf('=====================================\n');
-
-% Get the actual days present in the data
-days = {'D1', 'D28'};
-day1 = days{1};
-day2 = days{2};
-    
-    % Initialize table for storing statistical results
-    stat_results = table('Size', [length(fields)*length(mod_types), 5], ...
-        'VariableTypes', {'string', 'string', 'double', 'double', 'double'}, ...
-        'VariableNames', {'Field', 'ModType', 'Mean1', 'Mean2', 'PValue'});
-    row = 1;
-    
-    for f = 1:length(fields)
-        for m = 1:length(mod_types)
-            % Get column name for this measurement
-            col_name = [fields{f} '_' mod_types{m} '_frac'];
-            
-            % Initialize arrays for the two days
-            vals_day1 = nan(length(unique_animals), 1);
-            vals_day2 = nan(length(unique_animals), 1);
-            
-            % Collect data for each animal, ensuring paired data
-            for a = 1:length(unique_animals)
-                animal = unique_animals{a};
-                
-                % Get sessions for this animal
-                animal_sessions = startsWith(results.SessionID, animal);
-                animal_results = results(animal_sessions, :);
-                
-                % Get values for each day
-                day1_idx = [];
-                day2_idx = [];
-                for i = 1:height(animal_results)
-                    session = animal_results.SessionID{i};
-                    parts = split(session, '_');
-                    if strcmp(parts{2}, day1)
-                        day1_idx = i;
-                    elseif strcmp(parts{2}, day2)
-                        day2_idx = i;
-                    end
-                end
-                
-                % Only include if we have data for both days
-                if ~isempty(day1_idx) && ~isempty(day2_idx)
-                    vals_day1(a) = animal_results.(col_name)(day1_idx);
-                    vals_day2(a) = animal_results.(col_name)(day2_idx);
-                end
-            end
-            
-            % Remove any NaN values (animals missing data for either day)
-            valid_idx = ~isnan(vals_day1) & ~isnan(vals_day2);
-            vals_day1 = vals_day1(valid_idx);
-            vals_day2 = vals_day2(valid_idx);
-            
-            % Perform paired t-test if we have matching data
-            if ~isempty(vals_day1) && ~isempty(vals_day2)
-                [~, p] = ttest(vals_day1, vals_day2);
-                
-                % Store results
-                stat_results.Field(row) = fields{f};
-                stat_results.ModType(row) = mod_types{m};
-                stat_results.Mean1(row) = mean(vals_day1);
-                stat_results.Mean2(row) = mean(vals_day2);
-                stat_results.PValue(row) = p;
-                
-                row = row + 1;
-            end
-        end
-    end
-    
-    % Display results
-    fprintf('\nComparison between %s and %s:\n', day1, day2);
-    disp(stat_results);
-    
-    % Save statistical results
-    writetable(stat_results, fullfile('modulation_plots', 'statistical_results.csv'));
