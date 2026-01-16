@@ -14,8 +14,8 @@ bin_size_sec = 5; % Size of the "micro-assessment" bins
 num_bins = floor(tone_dur_sec / bin_size_sec);
 
 % --- DEFINE GROUPS (Trial Indices) ---
-TARGET_LASER_OFF = [6, 8]; 
-TARGET_LASER_ON  = [5, 7]; 
+TARGET_LASER_OFF = [2, 4]; 
+TARGET_LASER_ON  = [1, 3]; 
 
 %% 2. Directory Selection
 main_dir = uigetdir(pwd, 'Select the Parent Directory (e.g., bb)');

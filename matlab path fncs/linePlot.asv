@@ -3,7 +3,6 @@ function [varargout] = linePlot(zall, varargin)
 %
 % Syntax:
 % [fig] = linePlot(zall)
-% [fig, mean_data] = linePlot(zall, 'align', true)
 % [fig] = linePlot(zall, 'align', true, 'smooth_wnd', 10)
 % [fig] = linePlot(zall, xlines, xlineNames, 'title', 'My Plot')
 
@@ -14,21 +13,25 @@ function [varargout] = linePlot(zall, varargin)
 % xlineNames - (cell array) Names of xlines for the legend.
 % align - (binary) Whether to align rows by subtracting mean of the first xline.
 % smooth_wnd - (int) span for smoothing, 0 is no smoothing
+
 % title - (string) title for plot
-
-% Outputs:
-% fig       - Figure handle
-% mean_zall - (Optional) The calculated mean vector (after alignment/smoothing)
-
 % Parse input arguments
 p = inputParser;
-p.KeepUnmatched = true; 
+p.KeepUnmatched = true; % Useful if you pass extra plotting arguments
+
 addRequired(p, 'zall');
+
+% Changed addOptional to addParameter to support Name-Value pairs
 addParameter(p, 'xlines', []);
 addParameter(p, 'xlineNames', {});
 addParameter(p, 'align', false);
 addParameter(p, 'smooth_wnd', 0);
 addParameter(p, 'title', "");
+
+% Note: If you still want to support the OLD positional syntax 
+% (where xlines is the 2nd argument without a name), 
+% you must keep those specific ones as addOptional. 
+% For modern MATLAB, Name-Value (addParameter) is preferred.
 
 parse(p, zall, varargin{:});
 
@@ -39,13 +42,15 @@ align       = p.Results.align;
 smooth_wnd  = p.Results.smooth_wnd;
 ttl         = p.Results.title;
 
-% Alignment Logic
 if align
+    % Subtract DC offset based on the first xline marker
+    % Note: Added a check to ensure xlines exists before indexing
     if ~isempty(xlines)
         for i = 1:size(zall, 1)
             zall(i, :) = zall(i, :) - mean(zall(i, 1:xlines(1)));
         end
     else
+        % Fallback if align is true but no xlines provided
         zall = zall - mean(zall, 2); 
     end
 end
@@ -54,7 +59,6 @@ zall_offset = zall;
 mean_zall = mean(zall_offset, 1);
 sem_zall  = std(zall_offset, 0, 1) / sqrt(size(zall_offset, 1));
 
-% Smoothing Logic
 if smooth_wnd > 0
     mean_zall = smooth(mean_zall, smooth_wnd)';
     sem_zall  = smooth(sem_zall, smooth_wnd)';
@@ -69,30 +73,29 @@ inBetween = [(mean_zall + sem_zall), fliplr(mean_zall - sem_zall)];
 % Subplot 1: Individual Lines + Mean
 subplot(1, 2, 1);
 hold on;
-plot(zall_offset', 'Color', [0.7 0.7 0.7 0.5]); 
-fill(x2, inBetween, 'r', 'FaceAlpha', 0.25, 'EdgeColor', 'none');
+plot(zall_offset', 'Color', [0.7 0.7 0.7 0.5]); % Vectorized plotting for speed
+h = fill(x2, inBetween, 'r', 'FaceAlpha', 0.25, 'EdgeColor', 'none');
 plot(x, mean_zall, 'r', 'LineWidth', 2);
 
 % Subplot 2: Mean + SEM Only
 subplot(1, 2, 2);
 hold on;
-fill(x2, inBetween, 'r', 'FaceAlpha', 0.25, 'EdgeColor', 'none');
+h2 = fill(x2, inBetween, 'r', 'FaceAlpha', 0.25, 'EdgeColor', 'none');
 plot(x, mean_zall, 'r', 'LineWidth', 2);
 
-% Add Decorations
+% Add Decorations to both
 for s = 1:2
     subplot(1, 2, s);
-    if ~isempty(xlines), for i = 1:length(xlines), xline(xlines(i), ':'); end; end
+    if ~isempty(xlines)
+        for i = 1:length(xlines)
+            xline(xlines(i), ':');
+        end
+    end
     if s == 1, title(ttl); else, title('Mean and SEM Only'); end
 end
 
-% --- Handle Flexible Outputs ---
-nOutputs = nargout;
-if nOutputs >= 1
+% Handle outputs
+if nargout > 0
     varargout{1} = fig;
 end
-if nOutputs >= 2
-    varargout{2} = mean_zall;
-end
-
 end

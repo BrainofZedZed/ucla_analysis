@@ -1,6 +1,6 @@
 %% PARAMS TO EDIT
 % Set your base directory
-baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\Miniscope data\PL_TeA\good\including CSminus\'; % Replace with your directory path
+baseDir = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\pilots\csminus pilot\batch'; % Replace with your directory path
 % set the output save name
 savefile = 'freezing_data.mat';
 
