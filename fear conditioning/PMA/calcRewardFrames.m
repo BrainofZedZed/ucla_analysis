@@ -7,7 +7,7 @@
 % Output is reward data appended to the experiment file of each folder and
 % csv file containing all reward data across animals.
 
-beh_cam_fps = 50; % fps of behavior camera, default 50
+beh_cam_fps = 49.97; % fps of behavior camera, default 50
 
 %% Batch Setup
 % Collect 'video_folder_list' from 'P.video_directory'
@@ -87,7 +87,7 @@ for filenum = 1:length(P2.video_folder_list)
 end
 
 cd(string(P2.video_directory));
-writecell(reward_output, 'batch_reward_frames2.csv');
+writecell(reward_output, 'batch_reward_frames.csv');
 
 %%%%%%%%%%%%%%%
 % INTERNAL FXNS

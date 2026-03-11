@@ -87,12 +87,15 @@ auc_fc_avg_signed = {};
 auc_names_fc = {'ID', 'AUC (Custom Window)'};
 peaks = {};
 peak_names = {'ID','peak value', 'latency'};
+peaks_per_trial = {};          % per-trial peak values and latencies for each animal
+auc_per_trial_abs = {};        % per-trial absolute AUC for each animal
+auc_per_trial_signed = {};     % per-trial signed AUC for each animal
 P2.animal_dirs = struct();
 
 %% loop through folders
 for j = 1:length(P2.video_folder_list)
     % clear from previous round
-    clearvars -except 'BATCH_DATA' 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs' 'auc_fc_avg_signed' 'bouts_name';
+    clearvars -except 'BATCH_DATA' 'P2' 'ct' 'auc_fc' 'auc_names_fc' 'peaks_shock_all' 'peaks_nonshock_all' 'peak_names' 'j' 'auc_shock_all' 'auc_nonshock_all' 'auc_shock_names' ' peaks_baseline_all' 'auc_baseline_all' 'peaks' 'auc_fc_ind' 'auc_fc_ind_abs' 'auc_fc_abs' 'auc_fc_avg_signed' 'bouts_name' 'peaks_pertrial' 'auc_pertrial_ind_abs' 'auc_pertrial_ind';
     % Initialize 
     ct = ct+1; % increase count
     current_video = P2.video_folder_list(j);  
@@ -176,22 +179,38 @@ for j = 1:length(P2.video_folder_list)
     %% calculate peaks of epoc signal
     if P2.do_peak
         i_peak = calcPeaks(P2, zall, P2.peakWnd);
-        peaks{ct,1} = i_peak{1,1};
-        peaks{ct,2} = i_peak{1,2};
-        peaks{ct,3} = i_peak{1,3};
+        peaks{ct,1} = i_peak{1};
+        peaks{ct,2} = i_peak{2};
+        peaks{ct,3} = i_peak{3};
+        % store per-trial peak values and latencies (one row per trial)
+        peaks_per_trial{ct,1} = i_peak{1};   % animal ID
+        peaks_per_trial{ct,2} = i_peak{4};   % per-trial peak values (Ntrials x 1)
+        peaks_per_trial{ct,3} = i_peak{5};   % per-trial latencies  (Ntrials x 1)
+        trial_peaks_vals   = i_peak{4};
+        trial_latency_vals = i_peak{5};
+    else
+        trial_peaks_vals   = [];
+        trial_latency_vals = [];
     end
     %% calculate AUC of epoc signals
     if P2.do_auc
-        [row_abs, row_ind_abs, row_ind, row_avg_signed] = calcAUC(P2, zall);
-        % Append the new rows to the master lists
-        auc_fc_abs(ct, :)     = row_abs;
-        auc_fc_ind_abs(ct, :) = row_ind_abs;
-        auc_fc_ind(ct, :)     = row_ind;  
+        [row_abs, row_ind_abs, row_ind, row_avg_signed, trial_auc_abs_vals, trial_auc_signed_vals] = calcAUC(P2, zall);
+        % Append the mean-per-animal rows to the master lists
+        auc_fc_abs(ct, :)        = row_abs;
+        auc_fc_ind_abs(ct, :)    = row_ind_abs;
+        auc_fc_ind(ct, :)        = row_ind;
         auc_fc_avg_signed(ct, :) = row_avg_signed;
+        % store per-trial AUC vectors in batch collectors
+        auc_per_trial_abs{ct,1}    = P2.exp_ID;          % animal ID
+        auc_per_trial_abs{ct,2}    = trial_auc_abs_vals;  % per-trial absolute AUC (Ntrials x 1)
+        auc_per_trial_signed{ct,1} = P2.exp_ID;
+        auc_per_trial_signed{ct,2} = trial_auc_signed_vals; % per-trial signed AUC (Ntrials x 1)
     else
         auc_fc_abs = [];
         auc_fc_ind_abs = [];
         auc_fc_ind = [];
+        trial_auc_abs_vals    = [];
+        trial_auc_signed_vals = [];
     end
     %% do platform heatmap and signal
     if P2.do_platform
@@ -288,12 +307,17 @@ for j = 1:length(P2.video_folder_list)
         if ~exist('zall_pf_during_tone','var')
             zall_pf_during_tone = [];
         end
+        % per-trial peak and AUC values for this animal
+        if ~exist('trial_peaks_vals','var');    trial_peaks_vals    = []; end
+        if ~exist('trial_latency_vals','var');  trial_latency_vals  = []; end
+        if ~exist('trial_auc_abs_vals','var');  trial_auc_abs_vals  = []; end
+        if ~exist('trial_auc_signed_vals','var'); trial_auc_signed_vals = []; end
 
         P2.event_on = pre_dur;
         P2.event_off = epoc_length;
         savename = [basedir '\' P2.exp_ID '_' bouts_name '_fibpho_analysis.mat'];
         if P2.save_analysis
-          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'i_peak', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit');
+          save(savename, 'data', 'bouts', 'bouts_name', 'zall', 'i_peak', 'peak_names', 'auc_fc_abs', 'auc_names_fc', 'sig', 'bhsig', 'P2', 'auc_shock', 'auc_shock_names', 'auc_nonshock', 'peaks_shock', 'peaks_nonshock', 'shock_trials', 'nonshock_trials', 'on_platform_shock', 'beh2fp', 'peaks_baseline', 'auc_baseline', 'zall_pf', 'zall_pf_avoid','zall_pf_nontone','zall_pf_tone', 'zall_pf_entry', 'zall_pf_exit', 'trial_peaks_vals', 'trial_latency_vals', 'trial_auc_abs_vals', 'trial_auc_signed_vals');
         end
     
 end
@@ -492,9 +516,18 @@ end
     if ~exist('auc_fc_ind','var')
         auc_fc_ind = [];
     end
+    if ~exist('peaks_per_trial','var')
+        peaks_per_trial = {};
+    end
+    if ~exist('auc_per_trial_abs','var')
+        auc_per_trial_abs = {};
+    end
+    if ~exist('auc_per_trial_signed','var')
+        auc_per_trial_signed = {};
+    end
     
     if P2.save_analysis
-        save(['fibpho_analysis_' bouts_name '.mat'], 'auc_fc_ind', 'auc_fc_ind_abs', 'auc_fc_abs', 'auc_fc_avg_signed', 'auc_names_fc', 'peaks', 'peaks_shock_all', 'peaks_nonshock_all', 'peak_names', 'Params', 'auc_shock_all', 'auc_shock_names', 'auc_nonshock_all', 'auc_baseline_all', 'peaks_baseline_all');
+        save(['fibpho_analysis_' bouts_name '.mat'], 'auc_fc_ind', 'auc_fc_ind_abs', 'auc_fc_abs', 'auc_fc_avg_signed', 'auc_names_fc', 'peaks', 'peaks_per_trial', 'auc_per_trial_abs', 'auc_per_trial_signed', 'peaks_shock_all', 'peaks_nonshock_all', 'peak_names', 'Params', 'auc_shock_all', 'auc_shock_names', 'auc_nonshock_all', 'auc_baseline_all', 'peaks_baseline_all');
     end
 
         
@@ -745,17 +778,26 @@ function i_peak = calcPeaks(P2, zall, peakWnd)
         wndEnd = t0+(peakWnd(2)*P2.beh_fps);
         z = zall(:,wndStart:wndEnd);
     end
+
+    % Mean-trace peak (original behaviour)
     [peak, latency] = max(mean(z));
     latency = mean(latency);
     latency = latency/P2.beh_fps;
+
+    % Per-trial peaks and latencies (one value per row of zall)
+    [trial_peak_vals, trial_lat_vals] = max(z, [], 2);   % Nx1 each
+    trial_lat_vals = trial_lat_vals / P2.beh_fps;
+
     i_peak{1} = P2.exp_ID;
     i_peak{2} = peak;
     i_peak{3} = latency;
+    i_peak{4} = trial_peak_vals;   % per-trial peak values  (Nx1)
+    i_peak{5} = trial_lat_vals;    % per-trial peak latencies (Nx1)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [row_abs, row_ind_abs, row_ind, row_avg_signed] = calcAUC(P2, zall)
+function [row_abs, row_ind_abs, row_ind, row_avg_signed, trial_auc_ind_abs, trial_auc_ind] = calcAUC(P2, zall)
     % 1. Determine Time Indices
     % ---------------------------------------------------------
     t0 = round(P2.trange_peri_bout(1) * P2.beh_fps);
@@ -805,21 +847,25 @@ function [row_abs, row_ind_abs, row_ind, row_avg_signed] = calcAUC(P2, zall)
 
     %% B. Individual Trial Absolute AUC (row_ind_abs) - Uses Individual Traces + Abs
     try
-        trial_vals_abs = trapz(abs(zall(:, idx_start:idx_end)), 2);
+        trial_vals_abs = trapz(abs(zall(:, idx_start:idx_end)), 2);  % Nx1
         val_ind_abs = mean(trial_vals_abs, 'omitnan');
     catch
+        trial_vals_abs = NaN;
         val_ind_abs = NaN;
     end
     row_ind_abs = {P2.exp_ID, val_ind_abs};
+    trial_auc_ind_abs = trial_vals_abs;   % Nx1 per-trial absolute AUC
 
     %% C. Individual Trial Signed AUC (row_ind) - Uses Individual Traces + Signed
     try
-        trial_vals_signed = trapz(zall(:, idx_start:idx_end), 2);
+        trial_vals_signed = trapz(zall(:, idx_start:idx_end), 2);    % Nx1
         val_ind = mean(trial_vals_signed, 'omitnan');
     catch
+        trial_vals_signed = NaN;
         val_ind = NaN;
     end
     row_ind = {P2.exp_ID, val_ind};
+    trial_auc_ind = trial_vals_signed;    % Nx1 per-trial signed AUC
 
     %% D. Average Trace Signed AUC (row_avg_signed) - Uses Average Trace + Signed
     try
@@ -1439,4 +1485,3 @@ function [on_platform_shock] = go_shock_discoverer(zall, Tracking, Behavior, Par
             on_platform_shock(i) = all(in);
         end
     end
-    

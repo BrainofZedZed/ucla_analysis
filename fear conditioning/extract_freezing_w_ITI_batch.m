@@ -14,8 +14,8 @@ bin_size_sec = 5; % Size of the "micro-assessment" bins
 num_bins = floor(tone_dur_sec / bin_size_sec);
 
 % --- DEFINE GROUPS (Trial Indices) ---
-TARGET_LASER_OFF = [2, 4]; 
-TARGET_LASER_ON  = [1, 3]; 
+TARGET_LASER_OFF = [6, 8]; 
+TARGET_LASER_ON  = [5, 7]; 
 
 %% 2. Directory Selection
 main_dir = uigetdir(pwd, 'Select the Parent Directory (e.g., bb)');
@@ -123,8 +123,8 @@ for k = 1:length(fileList)
             hFig = generate_plot_fade(fade_off, fade_on, raw_post_off, raw_post_on, fps, t_bins, animalID);
             
             % Save Outputs
-            save(fullfile(curr_path, 'detailed_freezing_clatea.mat'), 'Results');
-            saveas(hFig, fullfile(curr_path, 'detailed_freezing_clatea.png'));
+            save(fullfile(curr_path, 'detailed_freezing_cla.mat'), 'Results');
+            saveas(hFig, fullfile(curr_path, 'detailed_freezing_cla.png'));
             close(hFig);
             
             % --- 5. APPEND TO TABLE ---
@@ -165,8 +165,8 @@ if ~isempty(SummaryData)
     assignin('base', 'BatchSummary', SummaryData);
     
     % Save to Excel
-    summary_path = fullfile(main_dir, 'Batch_Freezing_Summary_clatea.xlsx');
-    save(fullfile(main_dir,'summary_freezing_batch_clatea.mat'), "SummaryData");
+    summary_path = fullfile(main_dir, 'Batch_Freezing_Summary_cla.xlsx');
+    save(fullfile(main_dir,'summary_freezing_batch_cla.mat'), "SummaryData");
     
     fprintf('Summary saved to: %s\n', summary_path);
 else
