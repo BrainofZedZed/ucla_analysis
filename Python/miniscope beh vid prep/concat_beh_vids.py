@@ -108,5 +108,5 @@ def concatenate_with_ffmpeg(root_folder):
 if __name__ == "__main__":
     # Update this path to point to your root data directory
     # The script will recursively search for 'My_WebCam' folders within this directory
-    target_dir = r'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\miniscope data_revision\discrimination\ZZ363\D28'
+    target_dir = r'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\miniscope data_revision\discrimination\ZZ412-ZZ414'
     concatenate_with_ffmpeg(target_dir)

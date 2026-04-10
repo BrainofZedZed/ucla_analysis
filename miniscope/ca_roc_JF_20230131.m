@@ -40,9 +40,9 @@ event_vec2 = [];
 event_vec3 = [];
 
 % list of human legible names for the event vectors
-event_vec_names = {'freeze', 'CSp', 'CSm', 'CSp_freeze', 'CSm_freeze'};
+event_vec_names = {'freeze', 'csp', 'csp_freeze'};
 % concatenate event vectors
-event_vectors = [freeze_vec, csp_vec, csm_vec, csp_frz_vec, csm_frz_vec];
+event_vectors = [freeze_vec, csp_vec, csp_frz_vec];
 
 % point to save directory
 save_dir = 'C:\Users\Zach\Box\Zach_repo\Projects\Remote memory\Miniscope data\PL_TeA cohort1\batch for behdepot\ZZ087\D29';

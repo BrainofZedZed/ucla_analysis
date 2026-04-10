@@ -18,10 +18,9 @@ edit path_wc to include name of file you want to get path of"""
 #%%  imports
 import glob  # used to search for files
 import ntpath # alternative to os.path that is OS agnostic
-import natsort # for function natsorted
 
 #%%  create output
-path = r"C:\Users\DeNardoLab1\Box\Zach_repo\Projects\Remote_memory\Miniscope data\miniscope cohort3\2022_06_28"  # define path
+path = r"C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\miniscope data_revision\TeNT"  # define path
 path_wc = path + "\**\concat_beh.avi" # add search area:  ** indicates any number of subdir
 cam_dirs = glob.glob(path_wc, recursive = True) # get all subdirectories with My_WebCam
 
@@ -33,5 +32,5 @@ for x in cam_dirs:
     final_out = final_out + line
     
 #%% save
-with open('to_dlc.txt', 'w') as f:
+with open(path + '\\to_dlc.txt', 'w') as f:
     f.write(final_out)

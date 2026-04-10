@@ -33,6 +33,6 @@ for j = 1:length(P2.video_folder_list)
     load('Behavior.mat');
 
     out{j,1} = P2.video_folder_list(j);
-    out{j,2} = mean(cell2mat(Behavior.Intersect.TemBeh.CSp.Freezing.PerBehDuringCue(:)));
-    out{j,3} = mean(cell2mat(Behavior.Intersect.TemBeh.CSm.Freezing.PerBehDuringCue(:)));
+    out{j,2} = mean(cell2mat(Behavior.Intersect.TemBeh.csp.Freezing.PerBehDuringCue(:)));
+    %out{j,3} = mean(cell2mat(Behavior.Intersect.TemBeh.CSm.Freezing.PerBehDuringCue(:)));
 end
