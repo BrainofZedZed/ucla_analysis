@@ -1,7 +1,5 @@
 %% plotPeriToneLocs_batch -- a script to make a GIF of peri-tone location
 %% also records if animal was outside platform or not at shock onset
-% TO LOAD:  manually load (from BehDEPOT output):  Metrics, Behavior_Filter,
-% Params; also load experiment file from FCXD
 
 % TO ADJUST:  ensure tonetimes = event bouts of interest; can exclude
 % certain tones from visualization using the commented out line

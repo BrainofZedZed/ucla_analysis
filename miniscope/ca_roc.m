@@ -22,10 +22,10 @@ csp_vec = Behavior.Temporal.csp.Vector;
 csp_vec = csp_vec(2:end);
 csm_vec = Behavior.Temporal.csm.Vector;
 csm_vec = csm_vec(2:end);
-%csp_frz_vec = Behavior.Temporal.csp.Freezing.BehInEventVector;
-%csp_frz_vec = csp_frz_vec(2:end);
-%csm_frz_vec = Behavior.Temporal.csm.Freezing.BehInEventVector;
-%csm_frz_vec = csm_frz_vec(2:end);
+csp_frz_vec = Behavior.Intersect.TemBeh.csp.Freezing.BehInEventVector;
+csp_frz_vec = csp_frz_vec(2:end);
+csm_frz_vec = Behavior.Intersect.TemBeh.csm.Freezing.BehInEventVector;
+csm_frz_vec = csm_frz_vec(2:end);
 %us_vec = Behavior_Filter.Temporal.us.EventVector;
 %us_vec = us_vec(2:end);
 

@@ -4,7 +4,7 @@
 % The structure of Adata is Adata(x,y,cell_number) 
 % The structure of Cdata is Cdata(amplitude_frame,cell_number), where amplitude_frame will be the amplitude of C in that frame for a given cell_number.
 clear;
-minian_ds_path = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\miniscope data_revision\discrimination\ZZ376\D1\2026_02_11\11_22_31\My_V4_Miniscope\minian';
+minian_ds_path = 'C:\Users\boba4\Box\Zach_repo\Projects\Remote_memory\miniscope data_revision\discrimination\miniscope recordings\ZZ411\D28\2026_04_13\14_36_30\My_V4_Miniscope\minian';
 minian_ds_file = [minian_ds_path '\minian_dataset.nc'];
 Adata  = ncread(minian_ds_file,'A');
 Cdata  = ncread(minian_ds_file,'C');

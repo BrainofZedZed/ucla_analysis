@@ -190,7 +190,10 @@ for i_session = 1:length(session_dirs)
         frtslu      = frtslu_data.frtslu;
 
         % Trim to shortest common length across signal, frtslu, and event vectors
+        valid_rows = frtslu(:,3) >= 1 & frtslu(:,3) <= size(sig, 2);
+        frtslu = frtslu(valid_rows, :);
         cutoff = min([size(event_vectors, 2), size(frtslu, 1), size(sig, 2)]);
+        % Filter frtslu rows with out-of-range frame indices
         sig           = sig(:,          frtslu(1:cutoff, 3));
         event_vectors = event_vectors(:, 1:cutoff);
 
@@ -229,7 +232,8 @@ for i_session = 1:length(session_dirs)
                     continue
                 end
                 [x, y, ~, AUC] = perfcurve(eventmat, zsig(i_n,:), 1);
-                idx = round(linspace(1, length(x), n_samples));
+                x = x(:); y = y(:);
+                idx = round(linspace(1, length(x), n_samples))';
                 roc(:,:,i_n)  = [x(idx), y(idx)];
                 auc_n(i_n)    = AUC;
             end
